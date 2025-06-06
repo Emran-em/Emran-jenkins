@@ -3,12 +3,12 @@ pipeline {
 
     environment {
         SONAR_HOST = 'http://13.217.24.93:9000'
-        SONAR_TOKEN_CREDENTIAL_ID = 'sonar'   // your Sonar token credential id
+        SONAR_TOKEN_CREDENTIAL_ID = 'sonar'
         NEXUS_URL = 'http://13.217.24.93:8081/repository/maven-snapshots/in/'
         NEXUS_USERNAME = 'admin'
         NEXUS_PASSWORD = 'Mubsad321.'
         SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-        TOMCAT_URL = 'http://13.217.24.93:8083/manager/text'   // port changed here
+        TOMCAT_URL = 'http://13.217.24.93:8083/manager/text'
         TOMCAT_USERNAME = 'admin'
         TOMCAT_PASSWORD = 'admin123'
         APP_CONTEXT = 'simplecustomerapp'
@@ -54,7 +54,7 @@ pipeline {
                         -e SONAR_TOKEN=${SONAR_TOKEN} \
                         -v "$PWD":/usr/src \
                         sonarsource/sonar-scanner-cli \
-                        -Dsonar.projectKey=simplecustomerapp \
+                        -Dsonar.projectKey=${APP_CONTEXT} \
                         -Dsonar.sources=src \
                         -Dsonar.java.binaries="$BIN_DIR" \
                         -Dsonar.host.url=${SONAR_HOST} \
@@ -81,17 +81,6 @@ pipeline {
             }
         }
 
-        stage('Slack Notification') {
-            steps {
-                echo 'Sending Slack notification...'
-                sh """
-                  curl -X POST -H 'Content-type: application/json' \
-                    --data '{"text":"✅ Build SUCCESSFUL for *${APP_CONTEXT}*! 🚀"}' \
-                    ${SLACK_WEBHOOK_URL}
-                """
-            }
-        }
-
         stage('Deploy to Tomcat') {
             steps {
                 echo 'Deploying WAR to Tomcat...'
@@ -102,6 +91,17 @@ pipeline {
                     "${TOMCAT_URL}/deploy?path=/${APP_CONTEXT}&update=true" \
                     --user ${TOMCAT_USERNAME}:${TOMCAT_PASSWORD}
                 '''
+            }
+        }
+
+        stage('Slack Notification') {
+            steps {
+                echo 'Sending Slack notification...'
+                sh """
+                  curl -X POST -H 'Content-type: application/json' \
+                    --data '{"text":"✅ *Build SUCCESSFUL* for *${APP_CONTEXT}* on *${GIT_BRANCH}* branch! 🚀"}' \
+                    ${SLACK_WEBHOOK_URL}
+                """
             }
         }
     }
