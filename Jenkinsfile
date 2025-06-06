@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST = 'http://18.208.172.252:9000'
+        SONAR_HOST = 'http://13.217.24.93:9000'
         SONAR_TOKEN_CREDENTIAL_ID = 'sonar'   // your Sonar token credential id
-        NEXUS_URL = 'http://18.208.172.252:8081/repository/maven-snapshots/in/'
+        NEXUS_URL = 'http://13.217.24.93:8081/repository/maven-snapshots/in/'
         NEXUS_USERNAME = 'admin'
         NEXUS_PASSWORD = 'Mubsad321.'
         SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-        TOMCAT_URL = 'http://18.208.172.252:8082/manager/text'
+        TOMCAT_URL = 'http://13.217.24.93:8082/manager/text'
         TOMCAT_USERNAME = 'admin'
         TOMCAT_PASSWORD = 'admin123'
         APP_CONTEXT = 'simplecustomerapp'
