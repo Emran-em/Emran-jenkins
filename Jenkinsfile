@@ -8,7 +8,7 @@ pipeline {
         NEXUS_USERNAME = 'admin'
         NEXUS_PASSWORD = 'Mubsad321.'
         SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-        TOMCAT_URL = 'http://13.217.24.93:8082/manager/text'
+        TOMCAT_URL = 'http://13.217.24.93:8083/manager/text'   // port changed here
         TOMCAT_USERNAME = 'admin'
         TOMCAT_PASSWORD = 'admin123'
         APP_CONTEXT = 'simplecustomerapp'
