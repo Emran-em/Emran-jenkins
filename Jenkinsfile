@@ -13,7 +13,7 @@ pipeline {
         TOMCAT_PASSWORD = 'admin123'
         APP_CONTEXT = 'simplecustomerapp'
         GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
-        GIT_BRANCH = 'master'
+        GIT_BRANCH = 'main'
     }
 
     stages {
