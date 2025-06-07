@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    environment {
+        // Update these based on your actual setup
+        GIT_BRANCH = 'feature-1.1'
+        GIT_REPO = 'https://github.com/betawins/sabear_simplecutomerapp.git'
+        SONARQUBE_SERVER = 'MySonarQube' // Jenkins SonarQube Server Name
+        SONARQUBE_PROJECT_KEY = 'sabear_simplecutomerapp'
+        MAVEN_HOME = tool name: 'Maven 3.8', type: 'maven'
+        NEXUS_URL = 'http://your-nexus-url/repository/maven-releases/' // Update this
+        SLACK_CHANNEL = '#ci-cd' // Update this
+        TOMCAT_SERVER = 'ec2-user@your-tomcat-ip' // Use ssh
+        DEPLOY_PATH = '/opt/tomcat/webapps' // Target path
+    }
+
+    stages {
+
+        stage('1. Git Clone') {
+            steps {
+                git branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
+            }
+        }
+
+        stage('2. SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    sh "${MAVEN_HOME}/bin/mvn clean verify sonar:sonar -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY}"
+                }
+            }
+        }
+
+        stage('3. Maven Compile') {
+            steps {
+                sh "${MAVEN_HOME}/bin/mvn clean package -DskipTests"
+            }
+        }
+
+        stage('4. Nexus Artifact Upload') {
+            steps {
+                nexusArtifactUploader artifacts: [
+                    [artifactId: 'sabear_simplecutomerapp',
+                     classifier: '',
+                     file: "target/sabear_simplecutomerapp.war",
+                     type: 'war']
+                ],
+                credentialsId: 'nexus-credentials',
+                groupId: 'com.betawins',
+                nexusUrl: 'your-nexus-ip',
+                nexusVersion: 'nexus3',
+                protocol: 'http',
+                repository: 'maven-releases',
+                version: '1.1'
+            }
+        }
+
+        stage('5. Slack Notification') {
+            steps {
+                slackSend(channel: "${SLACK_CHANNEL}", message: "✅ Build for ${env.JOB_NAME} #${env.BUILD_NUMBER} succeeded!")
+            }
+        }
+
+        stage('6. Deploy to Tomcat') {
+            steps {
+                sh """
+                scp target/sabear_simplecutomerapp.war ${TOMCAT_SERVER}:${DEPLOY_PATH}
+                ssh ${TOMCAT_SERVER} 'bash -c "sudo systemctl restart tomcat"'
+                """
+            }
+        }
+    }
+
+    post {
+        failure {
+            slackSend(channel: "${SLACK_CHANNEL}", message: "❌ Build FAILED for ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+        }
+    }
+}
