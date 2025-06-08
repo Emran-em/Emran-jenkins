@@ -29,8 +29,6 @@ pipeline {
                 sh 'ls -l'
                 sh 'echo "--- Contents of src directory (Jenkins Host) ---"'
                 sh 'ls -l src'
-                sh 'echo "--- Contents of src/com/room/sample/view/Test directory (Jenkins Host) ---"'
-                sh 'ls -l src/com/room/sample/view/Test || echo "Test directory not found or empty." '
                 sh 'echo "--- Finding all .java files in src directory (Jenkins Host) ---"'
                 sh 'find src -name "*.java" || echo "No .java files found in src." '
             }
@@ -41,33 +39,42 @@ pipeline {
                 echo 'Building with Maven inside Docker...'
                 script { // Using script block for advanced shell logic and variable handling
                     def mavenContainerName = "maven-build-${UUID.randomUUID()}"
-                    def containerAppPath = "/usr/src/app" // Internal path for your project inside Maven container
+                    // Define a consistent internal path for your project inside Docker containers
+                    def containerProjectRoot = "/app"
 
-                    // DEBUG: List contents inside the Maven container before build to confirm mount
+                    // DEBUG: Verify contents at the root of the mounted project inside the Maven container *before* the main build command
                     sh """
-                        echo "--- Contents inside Maven container (${containerAppPath}) before build ---"
+                        echo "--- Contents at root of mounted project (${containerProjectRoot}) inside Maven container (pre-build check) ---"
                         docker run --rm \
-                          -v "$PWD":"${containerAppPath}" \
-                          -w "${containerAppPath}" \
+                          -v "$PWD":"${containerProjectRoot}" \
+                          -w "${containerProjectRoot}" \
                           maven:3.8.6-eclipse-temurin-17 \
-                          ls -l "${containerAppPath}/src/com/room/sample/view" || echo "Maven container src/com/room/sample/view not found."
+                          ls -l "${containerProjectRoot}" || { echo "ERROR: Mounted path not found or empty inside Maven container!"; exit 1; }
 
                         echo "--- Running Maven build ---"
                         docker run -d --name ${mavenContainerName} \
-                          -v "$PWD":"${containerAppPath}" \
+                          -v "$PWD":"${containerProjectRoot}" \
                           -v /var/lib/jenkins/.m2:/root/.m2 \
-                          -w "${containerAppPath}" \
+                          -w "${containerProjectRoot}" \
                           maven:3.8.6-eclipse-temurin-17 \
                           mvn clean compile package -DskipTests
                     """
 
                     // Wait for the Maven command inside the container to finish and stream its logs
-                    sh "docker logs -f ${mavenContainerName} & PID=\$!; docker wait ${mavenContainerName}; kill \$PID"
+                    // The 'kill $PID' might report 'No such process' if the log stream finished before kill
+                    // This is generally harmless and can be ignored for now.
+                    sh "docker logs -f ${mavenContainerName} & PID=\$!; docker wait ${mavenContainerName}; kill \$PID || true"
 
                     // Copy the 'target' directory from container to Jenkins host workspace
                     sh """
                         echo "--- Copying target directory from Maven container to Jenkins workspace ---"
-                        docker cp ${mavenContainerName}:${containerAppPath}/target ./target || { echo "ERROR: Failed to copy target directory from container!"; exit 1; }
+                        # Check if target exists in container before copying (to avoid docker cp errors if build failed)
+                        docker exec ${mavenContainerName} ls "${containerProjectRoot}/target" > /dev/null 2>&1
+                        if [ \$? -ne 0 ]; then
+                            echo "WARNING: target directory not found in container. Maven build likely failed."
+                            exit 1
+                        fi
+                        docker cp ${mavenContainerName}:${containerProjectRoot}/target ./target || { echo "ERROR: Failed to copy target directory from container!"; exit 1; }
                         echo "--- Contents of copied target/classes on Jenkins host ---"
                         ls -l target/classes || { echo "ERROR: target/classes NOT found on Jenkins host after copy!"; exit 1; }
                         echo "--- Contents of target/classes on Jenkins host (detail) ---"
@@ -75,7 +82,7 @@ pipeline {
                     """
 
                     // Clean up the Maven container
-                    sh "docker rm ${mavenContainerName}"
+                    sh "docker rm ${mavenContainerName} || true" # Add || true to gracefully handle if container already removed
                 }
             }
         }
@@ -84,15 +91,15 @@ pipeline {
             steps {
                 echo 'Running SonarQube analysis...'
                 withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                      # SonarScanner container will now reliably find target/classes on the Jenkins host
-                      CONTAINER_WORKSPACE=/usr/src/project # Consistent internal mount point for SonarScanner
+                    // Use the same consistent internal path for the SonarScanner container
+                    def containerProjectRoot = "/app"
 
-                      // DEBUG: Verify target/classes exists INSIDE the SonarScanner container
+                    // DEBUG: Verify target/classes exists INSIDE the SonarScanner container
+                    sh '''
                       echo "--- Checking target/classes INSIDE SonarScanner container before analysis ---"
                       docker run --rm \
-                        -v "$PWD":"${CONTAINER_WORKSPACE}" \
-                        -w "${CONTAINER_WORKSPACE}" \
+                        -v "$PWD":"${containerProjectRoot}" \
+                        -w "${containerProjectRoot}" \
                         sonarsource/sonar-scanner-cli \
                         ls -l target/classes || { echo "ERROR: target/classes NOT found inside SonarScanner container for analysis!"; exit 1; }
 
@@ -100,8 +107,8 @@ pipeline {
                       docker run --rm \
                         -e SONAR_HOST_URL=${SONAR_HOST} \
                         -e SONAR_TOKEN=${SONAR_TOKEN} \
-                        -v "$PWD":"${CONTAINER_WORKSPACE}" \
-                        -w "${CONTAINER_WORKSPACE}" \
+                        -v "$PWD":"${containerProjectRoot}" \
+                        -w "${containerProjectRoot}" \
                         sonarsource/sonar-scanner-cli \
                         -Dsonar.projectKey=${APP_CONTEXT} \
                         -Dsonar.sources=src \
