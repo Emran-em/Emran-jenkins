@@ -43,7 +43,8 @@
     <build>
         <!-- CORRECTED: Point sourceDirectory to 'src' as your Java files are directly under it -->
         <sourceDirectory>src</sourceDirectory>
-        <testSourceDirectory>src/com/room/sample/view/Test</testSourceDirectory> <!-- Point to your test classes -->
+        <!-- CORRECTED: Point testSourceDirectory to your test classes location -->
+        <testSourceDirectory>src/com/room/sample/view/Test</testSourceDirectory>
         <plugins>
             <!-- Maven Compiler Plugin -->
             <plugin>
@@ -53,6 +54,10 @@
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
+                    <!-- EXCLUDE test sources from main compilation to prevent JUnit errors -->
+                    <excludes>
+                        <exclude>com/room/sample/view/Test/**</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
 
@@ -63,6 +68,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <!-- IMPORTANT: This line tells Maven where your web content (HTML, JSPs, CSS) is located -->
                     <webappDirectory>${project.basedir}/WebContent</webappDirectory>
                 </configuration>
             </plugin>
