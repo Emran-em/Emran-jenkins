@@ -28,8 +28,8 @@ pipeline {
             steps {
                 echo 'Building with Maven inside Docker...'
                 script {
-                    def mavenContainerName = "maven-build-${UUID.randomUUID()}"
                     def containerProjectRoot = "/app"
+                    def mavenContainerName = "maven-build-${UUID.randomUUID()}"
 
                     sh """
                         docker run --rm \
@@ -75,46 +75,52 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 echo 'Uploading artifact to Nexus...'
-                sh """
-                    WAR_FILE=\$(find target -name "*.war" | head -n 1)
+                script {
+                    def warFile = findFiles(glob: 'target/*.war')[0]?.path
+                    if (!warFile) {
+                        error "WAR file not found, build may have failed."
+                    }
 
-                    if [ ! -f "\$WAR_FILE" ]; then
-                      echo "ERROR: WAR file not found, build may have failed."
-                      exit 1
-                    fi
-
-                    curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file "\$WAR_FILE" \\
-                      ${NEXUS_URL}${APP_CONTEXT}/0.1-SNAPSHOT/${APP_CONTEXT}-0.1-SNAPSHOT.war || { echo "ERROR: Nexus upload failed!"; exit 1; }
-                """
+                    sh """
+                        curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file ${warFile} \
+                          ${NEXUS_URL}${APP_CONTEXT}/0.1-SNAPSHOT/${APP_CONTEXT}-0.1-SNAPSHOT.war
+                    """
+                }
             }
         }
 
         stage('Slack Notification') {
             steps {
                 echo 'Sending Slack notification...'
-                sh """
-                    curl -X POST -H 'Content-type: application/json' \\
-                      --data '{"text":"✅ *Build SUCCESSFUL* for *${APP_CONTEXT}* on *${GIT_BRANCH}* branch! 🚀"}' \\
-                      ${SLACK_WEBHOOK_URL} || { echo "WARNING: Slack notification failed!"; }
-                """
+                script {
+                    def message = """
+                        {
+                            "text": "✅ *Build SUCCESSFUL* for *${APP_CONTEXT}* on *${GIT_BRANCH}* branch! 🚀"
+                        }
+                    """
+                    sh """
+                        curl -X POST -H 'Content-type: application/json' \
+                          --data '${message}' ${SLACK_WEBHOOK_URL}
+                    """
+                }
             }
         }
 
         stage('Deploy to Tomcat') {
             steps {
                 echo 'Deploying WAR to Tomcat...'
-                sh """
-                    WAR_FILE=\$(find target -name "*.war" | head -n 1)
+                script {
+                    def warFile = findFiles(glob: 'target/*.war')[0]?.path
+                    if (!warFile) {
+                        error "WAR file not found for deployment."
+                    }
 
-                    if [ ! -f "\$WAR_FILE" ]; then
-                      echo "ERROR: WAR file not found for deployment."
-                      exit 1
-                    fi
-
-                    curl -T "\$WAR_FILE" \\
-                      "${TOMCAT_URL}/deploy?path=/${APP_CONTEXT}&update=true" \\
-                      --user ${TOMCAT_USERNAME}:${TOMCAT_PASSWORD} || { echo "ERROR: Tomcat deployment failed!"; exit 1; }
-                """
+                    sh """
+                        curl -T ${warFile} \
+                          "${TOMCAT_URL}/deploy?path=/${APP_CONTEXT}&update=true" \
+                          --user ${TOMCAT_USERNAME}:${TOMCAT_PASSWORD}
+                    """
+                }
             }
         }
     }
