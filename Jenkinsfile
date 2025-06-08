@@ -9,7 +9,7 @@ node {
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
     env.APP_CONTEXT = 'simplecustomerapp'
-    env.GIT_REPO = 'https://github.com/betawins/sabear_simplecutomerapp.git'
+    env.GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
     env.GIT_BRANCH = 'feature-1.1'
 
     def buildStatus = 'SUCCESS'
@@ -108,7 +108,7 @@ node {
 
     } catch (Exception e) {
         buildStatus = 'FAILURE'
-        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥\\nError: ${e.message}"
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! �\\nError: ${e.message}"
         echo "Pipeline failed: ${e.message}"
         throw e
     } finally {
@@ -127,3 +127,4 @@ node {
         currentBuild.result = buildStatus
     }
 }
+�
