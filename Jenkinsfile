@@ -1,129 +1,119 @@
-pipeline {
-    agent any
+node {
+    env.SONAR_HOST = 'http://52.23.219.98:9000'
+    env.SONAR_TOKEN_CREDENTIAL_ID = 'sonar'
+    env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
+    env.NEXUS_USERNAME = 'admin'
+    env.NEXUS_PASSWORD = 'Mubsad321.'
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+    env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
+    env.TOMCAT_USERNAME = 'admin'
+    env.TOMCAT_PASSWORD = 'admin123'
+    env.APP_CONTEXT = 'simplecustomerapp'
+    env.GIT_REPO = 'https://github.com/betawins/sabear_simplecutomerapp.git'
+    env.GIT_BRANCH = 'feature-1.1'
 
-    environment {
-        SONAR_HOST = 'http://52.23.219.98:9000'
-        SONAR_TOKEN_CREDENTIAL_ID = 'sonar'
-        NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
-        NEXUS_USERNAME = 'admin'
-        NEXUS_PASSWORD = 'Mubsad321.'
-        SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-        TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
-        TOMCAT_USERNAME = 'admin'
-        TOMCAT_PASSWORD = 'admin123'
-        APP_CONTEXT = 'simplecustomerapp'
-        GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
-        GIT_BRANCH = 'master'
-    }
+    def buildStatus = 'SUCCESS'
+    def slackMessage = ''
 
-    stages {
+    try {
         stage('Git Clone') {
-            steps {
-                echo 'Cloning repository...'
-                git branch: "${env.GIT_BRANCH}", url: "${env.GIT_REPO}"
-            }
+            echo 'Cloning repository...'
+            deleteDir()
+            git branch: "${env.GIT_BRANCH}", url: "${env.GIT_REPO}"
         }
 
-        stage('Build with Maven') {
-            steps {
-                echo 'Building with Maven inside Docker...'
-                script {
-                    def containerProjectRoot = "/app"
-                    def mavenContainerName = "maven-build-${UUID.randomUUID()}"
+        stage('Maven Compilation') {
+            echo 'Building with Maven inside Docker...'
+            def containerProjectRoot = "/app"
+            def mavenContainerName = "maven-build-${UUID.randomUUID()}"
 
-                    sh """
-                        docker run --rm \\
-                          -v "${env.WORKSPACE}:${containerProjectRoot}" \\
-                          -v /var/lib/jenkins/.m2:/root/.m2 \\
-                          -w "${containerProjectRoot}" \\
-                          maven:3.8.6-eclipse-temurin-17 \\
-                          mvn clean compile package -DskipTests
-                    """
+            sh """
+                docker run --rm \\
+                  -v "${env.WORKSPACE}:${containerProjectRoot}" \\
+                  -v /var/lib/jenkins/.m2:/root/.m2 \\
+                  -w "${containerProjectRoot}" \\
+                  maven:3.8.6-eclipse-temurin-17 \\
+                  mvn clean compile package -DskipTests
+            """
 
-                    sh """
-                        if [ ! -d "${env.WORKSPACE}/target" ]; then
-                          echo "ERROR: target directory not found. Build probably failed."
-                          exit 1
-                        fi
-                    """
-                }
-            }
+            sh """
+                if [ ! -d "${env.WORKSPACE}/target" ]; then
+                  echo "ERROR: target directory not found. Build probably failed."
+                  exit 1
+                fi
+            """
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                echo 'Running SonarQube analysis...'
-                script { // ADDED: Wrap variable declarations and complex logic in a script block
-                    withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
-                        def containerProjectRoot = "/app"
-                        sh """
-                            docker run --rm \\
-                              -e SONAR_HOST_URL=${SONAR_HOST} \\
-                              -e SONAR_TOKEN=${SONAR_TOKEN} \\
-                              -v "${env.WORKSPACE}:${containerProjectRoot}" \\
-                              -w "${containerProjectRoot}" \\
-                              sonarsource/sonar-scanner-cli \\
-                              -Dsonar.projectKey=${APP_CONTEXT} \\
-                              -Dsonar.sources=src \\
-                              -Dsonar.java.binaries=target/classes \\
-                              -Dsonar.host.url=${SONAR_HOST} \\
-                              -Dsonar.login=${SONAR_TOKEN}
-                        """
-                    }
-                }
+            echo 'Running SonarQube analysis...'
+            withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
+                def containerProjectRoot = "/app"
+                sh """
+                    docker run --rm \\
+                      -e SONAR_HOST_URL=${env.SONAR_HOST} \\
+                      -e SONAR_TOKEN=${SONAR_TOKEN} \\
+                      -v "${env.WORKSPACE}:${containerProjectRoot}" \\
+                      -w "${containerProjectRoot}" \\
+                      sonarsource/sonar-scanner-cli \\
+                      -Dsonar.projectKey=${env.APP_CONTEXT} \\
+                      -Dsonar.sources=src \\
+                      -Dsonar.java.binaries=target/classes \\
+                      -Dsonar.host.url=${env.SONAR_HOST} \\
+                      -Dsonar.login=${SONAR_TOKEN}
+                """
             }
         }
 
-        stage('Upload to Nexus') {
-            steps {
-                echo 'Uploading artifact to Nexus...'
-                script {
-                    def warFile = findFiles(glob: 'target/*.war')[0]?.path
-                    if (!warFile) {
-                        error "WAR file not found, build may have failed."
-                    }
-
-                    sh """
-                        curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file ${warFile} \\
-                          ${NEXUS_URL}${APP_CONTEXT}/0.1-SNAPSHOT/${APP_CONTEXT}-0.1-SNAPSHOT.war
-                    """
-                }
+        stage('Nexus Artifactory') {
+            echo 'Uploading artifact to Nexus...'
+            def warFile = findFiles(glob: 'target/*.war')
+            if (warFile.length == 0) {
+                error "WAR file not found, build may have failed."
             }
+            def actualWarFile = warFile[0].path
+
+            sh """
+                curl -v -u ${env.NEXUS_USERNAME}:${env.NEXUS_PASSWORD} --upload-file ${actualWarFile} \\
+                  ${env.NEXUS_URL}${env.APP_CONTEXT}/0.1-SNAPSHOT/${env.APP_CONTEXT}-0.1-SNAPSHOT.war
+            """
         }
 
+        stage('Deploy On Tomcat') {
+            echo 'Deploying WAR to Tomcat...'
+            def warFile = findFiles(glob: 'target/*.war')
+            if (warFile.length == 0) {
+                error "WAR file not found for deployment."
+            }
+            def actualWarFile = warFile[0].path
+
+            sh """
+                curl -T ${actualWarFile} \\
+                  "${env.TOMCAT_URL}/deploy?path=/${env.APP_CONTEXT}&update=true" \\
+                  --user ${env.TOMCAT_USERNAME}:${env.TOMCAT_PASSWORD}
+            """
+            echo "Deployment to Tomcat completed. Access your app at: http://52.23.219.98:8083/${env.APP_CONTEXT}/"
+        }
+
+        slackMessage = "✅ *Build SUCCESSFUL* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 🚀"
+
+    } catch (Exception e) {
+        buildStatus = 'FAILURE'
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥\nError: ${e.message}"
+        echo "Pipeline failed: ${e.message}"
+        throw e
+    } finally {
         stage('Slack Notification') {
-            steps {
-                echo 'Sending Slack notification...'
-                script {
-                    def message = """
-                        {
-                            "text": "✅ *Build SUCCESSFUL* for *${APP_CONTEXT}* on *${GIT_BRANCH}* branch! 🚀"
-                        }
-                    """
-                    sh """
-                        curl -X POST -H 'Content-type: application/json' \\
-                          --data '${message}' ${SLACK_WEBHOOK_URL}
-                    """
+            echo 'Sending Slack notification...'
+            def messagePayload = """
+                {
+                    "text": "${slackMessage}"
                 }
-            }
+            """
+            sh """
+                curl -X POST -H 'Content-type: application/json' \\
+                  --data '${messagePayload}' ${env.SLACK_WEBHOOK_URL}
+            """
         }
-
-        stage('Deploy to Tomcat') {
-            steps {
-                echo 'Deploying WAR to Tomcat...'
-                script {
-                    def warFile = findFiles(glob: 'target/*.war')[0]?.path
-                    if (!warFile) {
-                        error "WAR file not found for deployment."
-                    }
-
-                    sh """
-                        curl -T ${warFile} \\
-                          "${TOMCAT_URL}/deploy?path=/${APP_CONTEXT}&update=true" \\
-                          --user ${TOMCAT_USERNAME}:${TOMCAT_PASSWORD}
-                    """
-                }
-            }
-        }
+        currentBuild.result = buildStatus
     }
 }
