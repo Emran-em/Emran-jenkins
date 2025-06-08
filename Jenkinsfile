@@ -32,11 +32,11 @@ pipeline {
                     def mavenContainerName = "maven-build-${UUID.randomUUID()}"
 
                     sh """
-                        docker run --rm \
-                          -v "${env.WORKSPACE}:${containerProjectRoot}" \
-                          -v /var/lib/jenkins/.m2:/root/.m2 \
-                          -w "${containerProjectRoot}" \
-                          maven:3.8.6-eclipse-temurin-17 \
+                        docker run --rm \\
+                          -v "${env.WORKSPACE}:${containerProjectRoot}" \\
+                          -v /var/lib/jenkins/.m2:/root/.m2 \\
+                          -w "${containerProjectRoot}" \\
+                          maven:3.8.6-eclipse-temurin-17 \\
                           mvn clean compile package -DskipTests
                     """
 
@@ -53,21 +53,23 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
-                withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
-                    def containerProjectRoot = "/app"
-                    sh """
-                      docker run --rm \
-                        -e SONAR_HOST_URL=${SONAR_HOST} \
-                        -e SONAR_TOKEN=${SONAR_TOKEN} \
-                        -v "${env.WORKSPACE}:${containerProjectRoot}" \
-                        -w "${containerProjectRoot}" \
-                        sonarsource/sonar-scanner-cli \
-                        -Dsonar.projectKey=${APP_CONTEXT} \
-                        -Dsonar.sources=src \
-                        -Dsonar.java.binaries=target/classes \
-                        -Dsonar.host.url=${SONAR_HOST} \
-                        -Dsonar.login=${SONAR_TOKEN}
-                    """
+                script { // ADDED: Wrap variable declarations and complex logic in a script block
+                    withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
+                        def containerProjectRoot = "/app"
+                        sh """
+                            docker run --rm \\
+                              -e SONAR_HOST_URL=${SONAR_HOST} \\
+                              -e SONAR_TOKEN=${SONAR_TOKEN} \\
+                              -v "${env.WORKSPACE}:${containerProjectRoot}" \\
+                              -w "${containerProjectRoot}" \\
+                              sonarsource/sonar-scanner-cli \\
+                              -Dsonar.projectKey=${APP_CONTEXT} \\
+                              -Dsonar.sources=src \\
+                              -Dsonar.java.binaries=target/classes \\
+                              -Dsonar.host.url=${SONAR_HOST} \\
+                              -Dsonar.login=${SONAR_TOKEN}
+                        """
+                    }
                 }
             }
         }
@@ -82,7 +84,7 @@ pipeline {
                     }
 
                     sh """
-                        curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file ${warFile} \
+                        curl -v -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} --upload-file ${warFile} \\
                           ${NEXUS_URL}${APP_CONTEXT}/0.1-SNAPSHOT/${APP_CONTEXT}-0.1-SNAPSHOT.war
                     """
                 }
@@ -99,7 +101,7 @@ pipeline {
                         }
                     """
                     sh """
-                        curl -X POST -H 'Content-type: application/json' \
+                        curl -X POST -H 'Content-type: application/json' \\
                           --data '${message}' ${SLACK_WEBHOOK_URL}
                     """
                 }
@@ -116,8 +118,8 @@ pipeline {
                     }
 
                     sh """
-                        curl -T ${warFile} \
-                          "${TOMCAT_URL}/deploy?path=/${APP_CONTEXT}&update=true" \
+                        curl -T ${warFile} \\
+                          "${TOMCAT_URL}/deploy?path=/${APP_CONTEXT}&update=true" \\
                           --user ${TOMCAT_USERNAME}:${TOMCAT_PASSWORD}
                     """
                 }
