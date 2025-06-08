@@ -1,10 +1,10 @@
 node {
     env.SONAR_HOST = 'http://52.23.219.98:9000'
     env.SONAR_TOKEN_CREDENTIAL_ID = 'sonar'
-    env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/' // Corrected IP from 55.x.x.x
+    env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
@@ -59,7 +59,6 @@ node {
             echo 'Running SonarQube analysis...'
             withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
                 def containerProjectRoot = "/app"
-                // Directly set sonar.userHome to /app to ensure cache is written to a writable location
                 sh """
                     docker run --rm \\
                       -e SONAR_HOST_URL=${env.SONAR_HOST} \\
@@ -71,7 +70,7 @@ node {
                       -Dsonar.projectKey=${env.APP_CONTEXT} \\
                       -Dsonar.sources=src \\
                       -Dsonar.java.binaries=target/classes \\
-                      -Dsonar.userHome=/app \\
+                      -Dsonar.working.directory=/app/.scannerwork \\
                       -Dsonar.host.url=${env.SONAR_HOST} \\
                       -Dsonar.login=${SONAR_TOKEN}
                 """
