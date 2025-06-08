@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.javatpoint</groupId>
-    <artifactId>SimpleCustomerApp-SP</artifactId>
+    <artifactId>simplecustomerapp-sp</artifactId> <!-- UPDATED: Lowercase artifactId -->
     <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
-    <name>SimpleCustomerApp-SP</name>
+    <name>simplecustomerapp-sp</name> <!-- UPDATED: Lowercase name -->
     <url>http://maven.apache.org</url>
 
     <properties>
