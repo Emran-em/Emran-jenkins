@@ -1,7 +1,7 @@
 node {
     env.SONAR_HOST = 'http://52.23.219.98:9000'
     env.SONAR_TOKEN_CREDENTIAL_ID = 'sonar'
-    env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
+    env.NEXUS_URL = 'http://55.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
     env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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O'
@@ -10,7 +10,7 @@ node {
     env.TOMCAT_PASSWORD = 'admin123'
     env.APP_CONTEXT = 'simplecustomerapp'
     env.GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
-    env.GIT_BRANCH = 'feature-1.1'
+    env.GIT_BRANCH = 'master' // UPDATED: Set to 'master' as clarified.
 
     def buildStatus = 'SUCCESS'
     def slackMessage = ''
@@ -18,7 +18,6 @@ node {
     try {
         stage('Git Clone') {
             echo 'Cloning repository...'
-            // Using cleanWs() for a more robust workspace cleanup
             cleanWs()
             git branch: "${env.GIT_BRANCH}", url: "${env.GIT_REPO}"
         }
@@ -111,7 +110,7 @@ node {
 
     } catch (Exception e) {
         buildStatus = 'FAILURE'
-        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥\\nError: ${e.message}"
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥 Error: ${e.message.replaceAll('\\s+', ' ')}"
         echo "Pipeline failed: ${e.message}"
         throw e
     } finally {
