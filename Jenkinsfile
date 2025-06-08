@@ -71,8 +71,9 @@ node {
                       -Dsonar.sources=src \\
                       -Dsonar.java.binaries=target/classes \\
                       -Dsonar.working.directory=/app/.scannerwork \\
+                      -Dsonar.userHome=/app/.sonar \\
                       -Dsonar.host.url=${env.SONAR_HOST} \\
-                      -Dsonar.login=${SONAR_TOKEN}
+                      # Removed -Dsonar.login as it's redundant with SONAR_TOKEN env variable
                 """
             }
         }
