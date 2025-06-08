@@ -35,11 +35,21 @@ node {
                   maven:3.8.6-eclipse-temurin-17 \\
                   mvn clean compile package -DskipTests
             """
-
             sh """
-                if [ ! -d "${env.WORKSPACE}/target" ]; then
-                  echo "ERROR: target directory not found. Build probably failed."
-                  exit 1
+                echo "Verifying contents of target/classes after Maven build:"
+                if [ -d "${env.WORKSPACE}/target/classes" ]; then
+                    echo "target/classes directory found. Listing all files recursively:"
+                    find "${env.WORKSPACE}/target/classes" -print -exec ls -ld {} +
+                    
+                    if find "${env.WORKSPACE}/target/classes" -name "*.class" | grep -q .; then
+                        echo "SUCCESS: target/classes contains compiled .class files."
+                    else
+                        echo "ERROR: target/classes directory exists but NO .class files were found! Maven compilation might have failed to produce class files or the source is empty."
+                        exit 1
+                    fi
+                else
+                    echo "ERROR: target/classes directory NOT FOUND after Maven build! This indicates a severe Maven compilation issue or incorrect project structure."
+                    exit 1
                 fi
             """
         }
@@ -98,7 +108,7 @@ node {
 
     } catch (Exception e) {
         buildStatus = 'FAILURE'
-        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥\nError: ${e.message}"
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥\\nError: ${e.message}"
         echo "Pipeline failed: ${e.message}"
         throw e
     } finally {
