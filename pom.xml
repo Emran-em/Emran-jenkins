@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.javatpoint</groupId>
-    <artifactId>SimpleCustomerApp</artifactId>
+    <artifactId>SimpleCustomerApp-SP</artifactId> <!-- CHANGED: Updated artifactId -->
     <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
-    <name>SimpleCustomerApp</name>
+    <name>SimpleCustomerApp-SP</name> <!-- CHANGED: Updated name -->
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -41,9 +41,7 @@
     </dependencies>
 
     <build>
-        <!-- CORRECTED: Point sourceDirectory to 'src' as your Java files are directly under it -->
         <sourceDirectory>src</sourceDirectory>
-        <!-- CORRECTED: Point testSourceDirectory to your test classes location -->
         <testSourceDirectory>src/com/room/sample/view/Test</testSourceDirectory>
         <plugins>
             <!-- Maven Compiler Plugin -->
@@ -54,7 +52,6 @@
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
-                    <!-- EXCLUDE test sources from main compilation to prevent JUnit errors -->
                     <excludes>
                         <exclude>com/room/sample/view/Test/**</exclude>
                     </excludes>
@@ -68,7 +65,6 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <!-- IMPORTANT: This line tells Maven where your web content (HTML, JSPs, CSS) is located -->
                     <webappDirectory>${project.basedir}/WebContent</webappDirectory>
                 </configuration>
             </plugin>
