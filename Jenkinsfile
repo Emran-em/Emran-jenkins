@@ -52,6 +52,8 @@ node {
                     echo "ERROR: target/classes directory NOT FOUND after Maven build! This indicates a severe Maven compilation issue or incorrect project structure."
                     exit 1
                 fi
+                echo "Listing all files in target/ directory for WAR verification:"
+                ls -l "${env.WORKSPACE}/target/"
             """
         }
 
@@ -80,9 +82,9 @@ node {
 
         stage('Nexus Artifactory') {
             echo 'Uploading artifact to Nexus...'
-            def warFile = findFiles(glob: 'target/*.war')
+            def warFile = findFiles(glob: "target/${env.APP_CONTEXT}-*.war")
             if (warFile.length == 0) {
-                error "WAR file not found, build may have failed."
+                error "WAR file not found with expected name 'target/${env.APP_CONTEXT}-*.war'. Please check your pom.xml artifactId or Maven build output."
             }
             def actualWarFile = warFile[0].path
 
@@ -94,9 +96,9 @@ node {
 
         stage('Deploy On Tomcat') {
             echo 'Deploying WAR to Tomcat...'
-            def warFile = findFiles(glob: 'target/*.war')
+            def warFile = findFiles(glob: "target/${env.APP_CONTEXT}-*.war")
             if (warFile.length == 0) {
-                error "WAR file not found for deployment."
+                error "WAR file not found for deployment with expected name 'target/${env.APP_CONTEXT}-*.war'. Check previous stages."
             }
             def actualWarFile = warFile[0].path
 
@@ -112,22 +114,4 @@ node {
 
     } catch (Exception e) {
         buildStatus = 'FAILURE'
-        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥 Error: ${e.message.replaceAll('\\s+', ' ')}"
-        echo "Pipeline failed: ${e.message}"
-        throw e
-    } finally {
-        stage('Slack Notification') {
-            echo 'Sending Slack notification...'
-            def messagePayload = """
-                {
-                    "text": "${slackMessage}"
-                }
-            """
-            sh """
-                curl -X POST -H 'Content-type: application/json' \\
-                  --data '${messagePayload}' ${env.SLACK_WEBHOOK_URL}
-            """
-        }
-        currentBuild.result = buildStatus
-    }
-}
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥 Error: ${e.message.replaceAll('\\s+', ' '
