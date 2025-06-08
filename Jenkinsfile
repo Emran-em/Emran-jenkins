@@ -4,7 +4,7 @@ pipeline {
     environment {
         SONAR_HOST = 'http://52.23.219.98:9000'
         SONAR_TOKEN_CREDENTIAL_ID = 'sonar'
-        NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/' // Standard Nexus path
+        NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
         NEXUS_USERNAME = 'admin'
         NEXUS_PASSWORD = 'Mubsad321.'
         SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
@@ -34,7 +34,7 @@ pipeline {
                       -v "$PWD":/usr/src/mymaven \
                       -w /usr/src/mymaven \
                       maven:3.8.6-eclipse-temurin-17 \
-                      mvn clean package -DskipTests
+                      mvn clean compile package -DskipTests  # ADDED 'compile' phase here
 
                     # DEBUG: Verify target/classes exists AFTER Maven build on Jenkins host
                     echo "Checking target/classes on Jenkins host after Maven build:"
@@ -50,9 +50,6 @@ pipeline {
                 echo 'Running SonarQube analysis...'
                 withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
                     sh '''
-                      # Set internal container working directory for SonarScanner
-                      # Mount the entire Jenkins workspace to '/usr/src/project' inside the container
-                      # This makes 'target/classes' accessible at '/usr/src/project/target/classes'
                       CONTAINER_WORKSPACE=/usr/src/project
 
                       # DEBUG: Verify target/classes exists INSIDE the SonarScanner container
