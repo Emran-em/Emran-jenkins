@@ -4,7 +4,7 @@ node {
     env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // UPDATED Slack URL
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
