@@ -8,7 +8,7 @@ node {
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
-    env.APP_CONTEXT = 'SimpleCustomerApp-SP' // FIXED: Case sensitive to match pom.xml artifactId: 'SimpleCustomerApp-SP'
+    env.APP_CONTEXT = 'simplecustomerapp-sp' // FIXED: Changed to all lowercase for consistency and SonarQube
     env.GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
     env.GIT_BRANCH = 'master'
 
