@@ -65,7 +65,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <webappDirectory>${project.basedir}/WebContent</webappDirectory> <!-- FIXED: Corrected 'basedid' to 'basedir' -->
+                    <webappDirectory>${project.basedir}/WebContent</webappDirectory>
                 </configuration>
             </plugin>
 
