@@ -4,7 +4,7 @@ node {
     env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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O'
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
@@ -32,6 +32,7 @@ node {
                   -v "${env.WORKSPACE}:${containerProjectRoot}" \\
                   -v /var/lib/jenkins/.m2:/root/.m2 \\
                   -w "${containerProjectRoot}" \\
+                  --user $(id -u):$(id -g) \\
                   maven:3.8.6-eclipse-temurin-17 \\
                   mvn clean compile package -DskipTests
             """
@@ -64,6 +65,7 @@ node {
                       -e SONAR_TOKEN=${SONAR_TOKEN} \\
                       -v "${env.WORKSPACE}:${containerProjectRoot}" \\
                       -w "${containerProjectRoot}" \\
+                      --user $(id -u):$(id -g) \\
                       sonarsource/sonar-scanner-cli \\
                       -Dsonar.projectKey=${env.APP_CONTEXT} \\
                       -Dsonar.sources=src \\
@@ -108,7 +110,7 @@ node {
 
     } catch (Exception e) {
         buildStatus = 'FAILURE'
-        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! �\\nError: ${e.message}"
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥\\nError: ${e.message}"
         echo "Pipeline failed: ${e.message}"
         throw e
     } finally {
@@ -127,4 +129,3 @@ node {
         currentBuild.result = buildStatus
     }
 }
-�
