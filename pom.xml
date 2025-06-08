@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.javatpoint</groupId>
-    <artifactId>SimpleCustomerApp-SP</artifactId> <!-- CHANGED: Updated artifactId -->
+    <artifactId>SimpleCustomerApp-SP</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
-    <name>SimpleCustomerApp-SP</name> <!-- CHANGED: Updated name -->
+    <name>SimpleCustomerApp-SP</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -65,7 +65,7 @@
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <webappDirectory>${project.basedir}/WebContent</webappDirectory>
+                    <webappDirectory>${project.basedid}/WebContent</webappDirectory>
                 </configuration>
             </plugin>
 
