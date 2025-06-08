@@ -59,6 +59,11 @@ node {
             echo 'Running SonarQube analysis...'
             withCredentials([string(credentialsId: "${env.SONAR_TOKEN_CREDENTIAL_ID}", variable: 'SONAR_TOKEN')]) {
                 def containerProjectRoot = "/app"
+                // Ensure the .sonar/cache directory exists and is writable in the workspace
+                sh """
+                    mkdir -p "${env.WORKSPACE}/.sonar/cache"
+                    chmod -R 777 "${env.WORKSPACE}/.sonar" # Give full permissions to .sonar and its contents for debugging
+                """
                 sh """
                     docker run --rm \\
                       -e SONAR_HOST_URL=${env.SONAR_HOST} \\
