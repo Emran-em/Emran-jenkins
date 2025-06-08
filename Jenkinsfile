@@ -4,7 +4,7 @@ node {
     env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // UPDATED to the working Slack URL
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
@@ -114,4 +114,24 @@ node {
 
     } catch (Exception e) {
         buildStatus = 'FAILURE'
-        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥 Error: ${e.message.replaceAll('\\s+', ' '
+        slackMessage = "❌ *Build FAILED* for *${env.APP_CONTEXT}* on *${env.GIT_BRANCH}* branch! 💥 Error: ${e.message.replaceAll('\\s+', ' ')}"
+        echo "Pipeline failed: ${e.message}"
+        throw e
+    } finally {
+        stage('Slack Notification') {
+            echo 'Sending Slack notification...'
+            def messagePayload = """
+                {
+                    "text": "${slackMessage}"
+                }
+            """
+            sh """
+                set +e
+                curl -X POST -H 'Content-type: application/json' \\
+                  --data '${messagePayload}' ${env.SLACK_WEBHOOK_URL}
+                set -e
+            """
+        }
+        currentBuild.result = buildStatus
+    }
+}
