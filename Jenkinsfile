@@ -32,7 +32,7 @@ node {
                   -v "${env.WORKSPACE}:${containerProjectRoot}" \\
                   -v /var/lib/jenkins/.m2:/root/.m2 \\
                   -w "${containerProjectRoot}" \\
-                  --user $(id -u):$(id -g) \\
+                  --user \$(id -u):\$(id -g) \\
                   maven:3.8.6-eclipse-temurin-17 \\
                   mvn clean compile package -DskipTests
             """
@@ -65,7 +65,7 @@ node {
                       -e SONAR_TOKEN=${SONAR_TOKEN} \\
                       -v "${env.WORKSPACE}:${containerProjectRoot}" \\
                       -w "${containerProjectRoot}" \\
-                      --user $(id -u):$(id -g) \\
+                      --user \$(id -u):\$(id -g) \\
                       sonarsource/sonar-scanner-cli \\
                       -Dsonar.projectKey=${env.APP_CONTEXT} \\
                       -Dsonar.sources=src \\
