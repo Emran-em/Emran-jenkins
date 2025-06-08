@@ -18,7 +18,8 @@ node {
     try {
         stage('Git Clone') {
             echo 'Cloning repository...'
-            deleteDir()
+            // Using cleanWs() for a more robust workspace cleanup
+            cleanWs()
             git branch: "${env.GIT_BRANCH}", url: "${env.GIT_REPO}"
         }
 
