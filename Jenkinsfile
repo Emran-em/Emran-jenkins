@@ -4,11 +4,11 @@ node {
     env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // UPDATED to the new working Slack URL
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
-    env.APP_CONTEXT = 'simplecustomerapp-sp'
+    env.APP_CONTEXT = 'SimpleCustomerApp-SP' // FIXED: Case sensitive to match pom.xml artifactId: 'SimpleCustomerApp-SP'
     env.GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
     env.GIT_BRANCH = 'master'
 
@@ -47,7 +47,6 @@ node {
                     else
                         echo "ERROR: target/classes directory exists but NO .class files were found! Maven compilation might have failed to produce class files or the source is empty."
                         exit 1
-                    CATCH ALL FOR ANY ERROR
                     fi
                 else
                     echo "ERROR: target/classes directory NOT FOUND after Maven build! This indicates a severe Maven compilation issue or incorrect project structure."
@@ -83,6 +82,7 @@ node {
 
         stage('Nexus Artifactory') {
             echo 'Uploading artifact to Nexus...'
+            // The glob pattern now matches the exact casing of the artifactId from pom.xml
             def warFile = findFiles(glob: "target/${env.APP_CONTEXT}-*.war")
             if (warFile.length == 0) {
                 error "WAR file not found with expected name 'target/${env.APP_CONTEXT}-*.war'. Please check your pom.xml artifactId or Maven build output."
@@ -97,6 +97,7 @@ node {
 
         stage('Deploy On Tomcat') {
             echo 'Deploying WAR to Tomcat...'
+            // The glob pattern now matches the exact casing of the artifactId from pom.xml
             def warFile = findFiles(glob: "target/${env.APP_CONTEXT}-*.war")
             if (warFile.length == 0) {
                 error "WAR file not found for deployment with expected name 'target/${env.APP_CONTEXT}-*.war'. Check previous stages."
