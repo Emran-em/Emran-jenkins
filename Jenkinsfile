@@ -4,7 +4,7 @@ node {
     env.NEXUS_URL = 'http://52.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // UPDATED to the working Slack URL
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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' // UPDATED to the new working Slack URL
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
@@ -47,6 +47,7 @@ node {
                     else
                         echo "ERROR: target/classes directory exists but NO .class files were found! Maven compilation might have failed to produce class files or the source is empty."
                         exit 1
+                    CATCH ALL FOR ANY ERROR
                     fi
                 else
                     echo "ERROR: target/classes directory NOT FOUND after Maven build! This indicates a severe Maven compilation issue or incorrect project structure."
