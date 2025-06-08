@@ -4,13 +4,13 @@ node {
     env.NEXUS_URL = 'http://55.23.219.98:8081/repository/maven-snapshots/'
     env.NEXUS_USERNAME = 'admin'
     env.NEXUS_PASSWORD = 'Mubsad321.'
-    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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O'
+    env.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
     env.TOMCAT_URL = 'http://52.23.219.98:8083/manager/text'
     env.TOMCAT_USERNAME = 'admin'
     env.TOMCAT_PASSWORD = 'admin123'
     env.APP_CONTEXT = 'simplecustomerapp'
     env.GIT_REPO = 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
-    env.GIT_BRANCH = 'master' // UPDATED: Set to 'master' as clarified.
+    env.GIT_BRANCH = 'master'
 
     def buildStatus = 'SUCCESS'
     def slackMessage = ''
@@ -64,6 +64,7 @@ node {
                       -e SONAR_HOST_URL=${env.SONAR_HOST} \\
                       -e SONAR_TOKEN=${SONAR_TOKEN} \\
                       -v "${env.WORKSPACE}:${containerProjectRoot}" \\
+                      -v "${env.WORKSPACE}/.sonar/cache:/opt/sonar-scanner/.sonar/cache" \\
                       -w "${containerProjectRoot}" \\
                       --user \$(id -u):\$(id -g) \\
                       sonarsource/sonar-scanner-cli \\
