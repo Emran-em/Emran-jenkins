@@ -11,13 +11,83 @@
 
     <name>Hiring App</name>
 
+    <!-- Add project URL and description (optional but helpful) -->
+    <url>https://github.com/betawins/hiring-app</url>
+    <description>Web application for hiring management</description>
+
+    <properties>
+        <!-- Java version -->
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <build>
         <plugins>
+            <!-- WAR packaging plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.1</version>
+                <configuration>
+                    <!-- Optional: exclude certain files/folders -->
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
             </plugin>
+
+            <!-- Surefire plugin: runs unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <testFailureIgnore>false</testFailureIgnore>
+                </configuration>
+            </plugin>
+
+            <!-- Optional: Cobertura plugin for code coverage if used -->
+            <!--
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <formats>
+                        <format>xml</format>
+                    </formats>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>cobertura</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            -->
         </plugins>
     </build>
+
+    <!-- Add reporting section for SonarQube if required -->
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.9.0.2155</version>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <!-- Dependency management if needed -->
+    <!-- Example dependencies for a basic servlet application, adjust as needed -->
+    <dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>
