@@ -10,48 +10,83 @@
     <packaging>war</packaging>
 
     <name>Hiring App</name>
-
-    <!-- Add project URL and description (optional but helpful) -->
     <url>https://github.com/betawins/hiring-app</url>
     <description>Web application for hiring management</description>
 
     <properties>
-        <!-- Java version -->
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <!-- Encoding -->
+        <!-- Java version compatibility -->
+        <java.version>11</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Maven surefire plugin version -->
+        <surefire.plugin.version>3.0.0-M7</surefire.plugin.version>
+        <!-- Maven WAR plugin version -->
+        <war.plugin.version>3.3.1</war.plugin.version>
+        <!-- Sonar Maven plugin version -->
+        <sonar.maven.plugin.version>3.9.0.2155</sonar.maven.plugin.version>
+        <!-- Uncomment if using cobertura -->
+        <!--
+        <cobertura.plugin.version>2.7</cobertura.plugin.version>
+        -->
     </properties>
+
+    <dependencies>
+        <!-- Servlet API for WAR packaging -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Add other dependencies here as needed -->
+    </dependencies>
 
     <build>
         <plugins>
+            <!-- Maven Compiler Plugin (implicit, but can be explicitly configured) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
             <!-- WAR packaging plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>${war.plugin.version}</version>
                 <configuration>
-                    <!-- Optional: exclude certain files/folders -->
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
 
-            <!-- Surefire plugin: runs unit tests -->
+            <!-- Surefire plugin to run unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>${surefire.plugin.version}</version>
                 <configuration>
                     <testFailureIgnore>false</testFailureIgnore>
+                    <!-- Skip tests by default? Comment if you want tests always run -->
+                    <!-- <skipTests>true</skipTests> -->
                 </configuration>
             </plugin>
 
-            <!-- Optional: Cobertura plugin for code coverage if used -->
+            <!-- Optional: Cobertura plugin for code coverage -->
+            <!-- Uncomment and configure if you want coverage reports -->
             <!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
+                <version>${cobertura.plugin.version}</version>
                 <configuration>
                     <formats>
                         <format>xml</format>
@@ -62,6 +97,7 @@
                         <goals>
                             <goal>cobertura</goal>
                         </goals>
+                        <phase>verify</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -69,25 +105,14 @@
         </plugins>
     </build>
 
-    <!-- Add reporting section for SonarQube if required -->
     <reporting>
         <plugins>
+            <!-- SonarQube Maven plugin for integration -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.9.0.2155</version>
+                <version>${sonar.maven.plugin.version}</version>
             </plugin>
         </plugins>
     </reporting>
-
-    <!-- Dependency management if needed -->
-    <!-- Example dependencies for a basic servlet application, adjust as needed -->
-    <dependencies>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
 </project>
