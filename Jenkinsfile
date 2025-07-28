@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME'  // Make sure Maven tool is configured with this name in Jenkins
+        maven 'MAVEN_HOME'
     }
 
     environment {
-        SONARQUBE = 'MySonar'                            // Your SonarQube server name configured in Jenkins
-        NEXUS_CREDENTIALS = credentials('Nexus_server') // Nexus username/password credential ID
-        NEXUS_URL = 'http://52.23.219.98:8081/repository/devops/'
-        SLACK_TOKEN = credentials('slack')              // Slack token credential ID
-        SLACK_CHANNEL = '#new-channel'                   // Updated Slack channel here
+        SONARQUBE = 'MySonar'
+        NEXUS_CREDENTIALS = credentials('Nexus_server')
+        NEXUS_URL = 'http://3.92.29.53:8081/repository/d/'
+        SLACK_TOKEN = credentials('slack')
+        SLACK_CHANNEL = '#new-channel'
     }
 
     stages {
