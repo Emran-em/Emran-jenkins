@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.8.7-eclipse-temurin-17'
-        }
-    }
+    agent any
 
     tools {
         maven 'MAVEN_HOME'
@@ -57,7 +53,10 @@ pipeline {
 
         stage('Slack Notification') {
             steps {
-                slackSend (channel: '#devops', message: "Build Completed: ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+                slackSend (
+                    channel: '#devops',
+                    message: "Build Completed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                )
             }
         }
     }
