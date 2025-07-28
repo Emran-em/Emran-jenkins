@@ -2,19 +2,21 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME'
+        maven 'MAVEN_HOME'  // Make sure Maven tool is configured with this name in Jenkins
     }
 
     environment {
-        SONARQUBE = 'MySonar'
-        NEXUS_CREDENTIALS = credentials('nexus')
+        SONARQUBE = 'MySonar'                            // Your SonarQube server name configured in Jenkins
+        NEXUS_CREDENTIALS = credentials('Nexus_server') // Nexus username/password credential ID
         NEXUS_URL = 'http://52.23.219.98:8081/repository/devops/'
+        SLACK_TOKEN = credentials('slack')              // Slack token credential ID
+        SLACK_CHANNEL = '#new-channel'                   // Updated Slack channel here
     }
 
     stages {
-        stage('Git Clone') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/betawins/hiring-app.git'
+                git branch: 'master', url: 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
             }
         }
 
@@ -50,13 +52,14 @@ pipeline {
                 '''
             }
         }
+    }
 
-        stage('Slack Notification') {
-            steps {
-                slackSend (
-                    channel: '#devops',
-                    message: "Build Completed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                )
+    post {
+        always {
+            script {
+                def buildStatus = currentBuild.currentResult ?: 'SUCCESS'
+                def message = "${buildStatus}: Job ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Details>)"
+                slackSend(channel: env.SLACK_CHANNEL, tokenCredentialId: 'slack', message: message)
             }
         }
     }
