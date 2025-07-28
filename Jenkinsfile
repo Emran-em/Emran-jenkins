@@ -6,55 +6,47 @@ pipeline {
     }
 
     environment {
-        SONARQUBE = 'MySonar'
-        NEXUS_CREDS = credentials('Nexus_server')
+        SONARQUBE_URL = 'http://52.23.219.98:9000'
         SONAR_TOKEN = credentials('sonarqube-token')
+        NEXUS_URL = 'http://52.23.219.98:8081/repository/devops/'
+        NEXUS_CRED = credentials('Nexus_server')
         SLACK_TOKEN = credentials('slack')
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
+                git url: 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Build & SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    sh """
-                        mvn clean verify sonar:sonar \
-                        -Dsonar.projectKey=SimpleCustomerAppKey:SimpleCustomerApp \
-                        -Dsonar.projectName=SimpleCustomerApp \
-                        -Dsonar.projectVersion=2.0 \
-                        -Dsonar.login=${SONAR_TOKEN}
-                    """
-                }
+                sh '''
+                    mvn clean install sonar:sonar \
+                    -Dsonar.host.url=$SONARQUBE_URL \
+                    -Dsonar.login=$SONAR_TOKEN
+                '''
             }
         }
 
-        stage('Build with Maven') {
+        stage('Upload Artifact to Nexus') {
             steps {
-                sh 'mvn package'
-            }
-        }
-
-        stage('Upload to Nexus') {
-            steps {
-                sh """
-                    mvn deploy -DaltDeploymentRepository=internal.repo::default::http://52.23.219.98:8081/repository/maven-releases/ \
-                    -Dnexus.username=${NEXUS_CREDS_USR} -Dnexus.password=${NEXUS_CREDS_PSW}
-                """
+                sh '''
+                    mvn deploy -DaltDeploymentRepository=devops-repo::default::${NEXUS_URL} \
+                    -Dnexus.username=${NEXUS_CRED_USR} \
+                    -Dnexus.password=${NEXUS_CRED_PSW}
+                '''
             }
         }
     }
 
     post {
         success {
-            slackSend (tokenCredentialId: 'slack', channel: '#devops', message: "✅ Pipeline succeeded for *SimpleCustomerApp*", color: 'good')
+            slackSend(channel: '#general', color: 'good', message: "✅ Job '${env.JOB_NAME}' build #${env.BUILD_NUMBER} succeeded!")
         }
         failure {
-            slackSend (tokenCredentialId: 'slack', channel: '#devops', message: "❌ Pipeline failed for *SimpleCustomerApp*", color: 'danger')
+            slackSend(channel: '#general', color: 'danger', message: "❌ Job '${env.JOB_NAME}' build #${env.BUILD_NUMBER} failed!")
         }
     }
 }
