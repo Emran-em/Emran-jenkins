@@ -2,51 +2,64 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME'
+        maven 'MAVEN_HOME' // Must match your Global Tool Configuration
     }
 
     environment {
-        SONARQUBE_URL = 'http://52.23.219.98:9000'
-        SONAR_TOKEN = credentials('sonarqube-token')
-        NEXUS_URL = 'http://52.23.219.98:8081/repository/devops/'
-        NEXUS_CRED = credentials('Nexus_server')
+        SONARQUBE = credentials('sonarqube-token')
+        NEXUS_CREDENTIALS = credentials('Nexus_server')
         SLACK_TOKEN = credentials('slack')
+        NEXUS_URL = 'http://52.23.219.98:8081/repository/devops/'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git url: 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
             }
         }
 
-        stage('Build & SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-                sh '''
-                    mvn clean install sonar:sonar \
-                    -Dsonar.host.url=$SONARQUBE_URL \
-                    -Dsonar.login=$SONAR_TOKEN
-                '''
+                withSonarQubeEnv('MySonar') {
+                    sh 'mvn clean verify sonar:sonar -Dsonar.token=$SONARQUBE'
+                }
             }
         }
 
-        stage('Upload Artifact to Nexus') {
+        stage('Build WAR') {
             steps {
-                sh '''
-                    mvn deploy -DaltDeploymentRepository=devops-repo::default::${NEXUS_URL} \
-                    -Dnexus.username=${NEXUS_CRED_USR} \
-                    -Dnexus.password=${NEXUS_CRED_PSW}
-                '''
+                sh 'mvn package'
+            }
+        }
+
+        stage('Upload to Nexus') {
+            steps {
+                sh """
+                    mvn deploy:deploy-file \\
+                      -DgroupId=com.customer \\
+                      -DartifactId=simple-customer-app \\
+                      -Dversion=1.0 \\
+                      -Dpackaging=war \\
+                      -Dfile=target/*.war \\
+                      -DrepositoryId=nexus \\
+                      -Durl=$NEXUS_URL \\
+                      -Dusername=${NEXUS_CREDENTIALS_USR} \\
+                      -Dpassword=${NEXUS_CREDENTIALS_PSW}
+                """
+            }
+        }
+
+        stage('Notify Slack') {
+            steps {
+                slackSend channel: '#devops-alerts', tokenCredentialId: 'slack', message: "✅ *Build SUCCESS:* ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             }
         }
     }
 
     post {
-        success {
-            slackSend(channel: '#general', color: 'good', message: "✅ Job '${env.JOB_NAME}' build #${env.BUILD_NUMBER} succeeded!")
-        }
         failure {
-            slackSend(channel: '#general', color: 'danger', message: "❌ Job '${env.JOB_NAME}' build #${env.BUILD_NUMBER} failed!")
+            slackSend channel: '#devops-alerts', tokenCredentialId: 'slack', message: "❌ *Build FAILED:* ${env.JOB_NAME} #${env.BUILD_NUMBER}"
         }
     }
 }
