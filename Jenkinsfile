@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME' // Ensure this Maven tool is configured in Jenkins globally
+        maven 'MAVEN_HOME' // Ensure Maven tool is configured with this exact identifier in Jenkins
     }
 
     environment {
-        SONARQUBE = 'MySonar'                           // SonarQube server name
-        NEXUS_CREDENTIALS = credentials('Nexus_server')// Nexus username/password credential ID
-        NEXUS_URL = 'http://3.92.29.53:8081/repository/devops/' // Correct Nexus repo URL
-        SLACK_TOKEN = credentials('slack')             // Slack token credential ID
-        SLACK_CHANNEL = '#new-channel'                  // Slack channel for notifications
+        SONARQUBE = 'MySonar'                          // Your SonarQube server name in Jenkins config
+        NEXUS_CREDENTIALS = credentials('Nexus_server') // Nexus username/password credential ID
+        NEXUS_URL = 'http://3.92.29.53:8081/repository/devops/' // Nexus hosted Maven repo URL
+        SLACK_TOKEN = credentials('slack')            // Slack token credential ID configured in Jenkins
+        SLACK_CHANNEL = '#new-channel'                 // Slack channel for notifications
     }
 
     stages {
@@ -37,19 +37,20 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
+                    // Find the generated WAR file dynamically to avoid hardcoding
                     def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
                     sh """
-                        mvn deploy:deploy-file \
-                        -DgroupId=com.hiring \
-                        -DartifactId=hiring-app \
-                        -Dversion=1.0.0 \
-                        -Dpackaging=war \
-                        -Dfile=${warFile} \
-                        -DrepositoryId=nexus \
-                        -Durl=${env.NEXUS_URL} \
-                        -DgeneratePom=true \
-                        -DrepositoryLayout=default \
-                        -Dusername=${env.NEXUS_CREDENTIALS_USR} \
+                        mvn deploy:deploy-file \\
+                        -DgroupId=com.hiring \\
+                        -DartifactId=hiring-app \\
+                        -Dversion=1.0.0 \\
+                        -Dpackaging=war \\
+                        -Dfile=${warFile} \\
+                        -DrepositoryId=nexus \\
+                        -Durl=${env.NEXUS_URL} \\
+                        -DgeneratePom=true \\
+                        -DrepositoryLayout=default \\
+                        -Dusername=${env.NEXUS_CREDENTIALS_USR} \\
                         -Dpassword=${env.NEXUS_CREDENTIALS_PSW}
                     """
                 }
