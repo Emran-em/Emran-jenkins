@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME' // Ensure Maven tool is configured with this exact identifier in Jenkins
+        maven 'MAVEN_HOME' // Your configured Maven tool label
     }
 
     environment {
-        SONARQUBE = 'MySonar'                          // Your SonarQube server name in Jenkins config
-        NEXUS_CREDENTIALS = credentials('Nexus_server') // Nexus username/password credential ID
-        NEXUS_URL = 'http://3.92.29.53:8081/repository/devops/' // Nexus hosted Maven repo URL
-        SLACK_TOKEN = credentials('slack')            // Slack token credential ID configured in Jenkins
-        SLACK_CHANNEL = '#new-channel'                 // Slack channel for notifications
+        SONARQUBE = 'MySonar'                          // Your SonarQube server configuration name
+        NEXUS_CREDENTIALS = credentials('Nexus_server') // Nexus credentials ID
+        NEXUS_URL = 'http://3.92.29.53:8081/repository/maven-releases/' // Updated repo URL
+        SLACK_TOKEN = credentials('slack')
+        SLACK_CHANNEL = '#new-channel'
     }
 
     stages {
@@ -37,7 +37,6 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
-                    // Find the generated WAR file dynamically to avoid hardcoding
                     def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
                     sh """
                         mvn deploy:deploy-file \\
