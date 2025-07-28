@@ -1,47 +1,44 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
-         
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.customer</groupId>
-    <artifactId>SimpleCustomerApp</artifactId>
-    <version>1.0.0</version>
-    <packaging>jar</packaging>
 
-    <name>SimpleCustomerApp</name>
+    <groupId>com.customer</groupId>
+    <artifactId>simple-customer-app</artifactId>
+    <version>1.0</version>
+    <packaging>war</packaging>
+
+    <name>Simple Customer App</name>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
     <build>
         <plugins>
-            <!-- Compiler Plugin -->
+            <!-- Compiler plugin -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.10.1</version>
             </plugin>
 
-            <!-- Sonar Plugin -->
+            <!-- WAR Plugin -->
             <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.9.1.2184</version>
-            </plugin>
-
-            <!-- Maven Deploy for Nexus -->
-            <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
             </plugin>
         </plugins>
     </build>
 
     <distributionManagement>
         <repository>
-            <id>devops-repo</id>
+            <id>nexus</id>
             <url>http://52.23.219.98:8081/repository/devops/</url>
         </repository>
     </distributionManagement>
