@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SONARQUBE = 'MySonar'
-        NEXUS_URL = 'http://3.85.130.86:8081/repository/devops/'
+        NEXUS_URL = 'http://34.204.71.153:8081/repository/devops/' // Updated Nexus URL
         SLACK_CHANNEL = '#new-channel'
     }
 
