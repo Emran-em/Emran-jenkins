@@ -8,7 +8,7 @@ pipeline {
     environment {
         SONARQUBE = 'MySonar'
         NEXUS_CREDENTIALS = credentials('Nexus_server')
-        NEXUS_URL = 'http://3.92.29.53:8081/repository/maven-releases/'
+        NEXUS_URL = 'http://host.docker.internal:8081/repository/maven-releases/'  // Docker-local communication
         SLACK_TOKEN = credentials('slack')
         SLACK_CHANNEL = '#new-channel'
     }
@@ -37,8 +37,7 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
-                    // Get the correct WAR file name based on your artifactId and version:
-                    def warFile = sh(script: "ls target/SimpleCustomerApp*.war", returnStdout: true).trim()
+                    def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
                     sh """
                         mvn deploy:deploy-file \\
                         -DgroupId=com.javatpoint \\
@@ -47,11 +46,11 @@ pipeline {
                         -Dpackaging=war \\
                         -Dfile=${warFile} \\
                         -DrepositoryId=nexus \\
-                        -Durl=${env.NEXUS_URL} \\
+                        -Durl=${NEXUS_URL} \\
                         -DgeneratePom=true \\
                         -DrepositoryLayout=default \\
-                        -Dusername=${env.NEXUS_CREDENTIALS_USR} \\
-                        -Dpassword=${env.NEXUS_CREDENTIALS_PSW}
+                        -Dusername=${NEXUS_CREDENTIALS_USR} \\
+                        -Dpassword=${NEXUS_CREDENTIALS_PSW}
                     """
                 }
             }
