@@ -8,7 +8,7 @@ pipeline {
     environment {
         SONARQUBE = 'MySonar'
         NEXUS_CREDENTIALS = credentials('Nexus_server')
-        NEXUS_URL = 'http://host.docker.internal:8081/repository/maven-releases/'
+        NEXUS_URL = 'http://3.85.130.86:8081/repository/maven-releases/'  // ✅ Updated with working public IP
         SLACK_CHANNEL = '#new-channel'
     }
 
