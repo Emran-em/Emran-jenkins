@@ -8,8 +8,7 @@ pipeline {
     environment {
         SONARQUBE = 'MySonar'
         NEXUS_CREDENTIALS = credentials('Nexus_server')
-        NEXUS_URL = 'http://host.docker.internal:8081/repository/maven-releases/'  // Docker-local communication
-        SLACK_TOKEN = credentials('slack')
+        NEXUS_URL = 'http://host.docker.internal:8081/repository/maven-releases/'
         SLACK_CHANNEL = '#new-channel'
     }
 
@@ -48,7 +47,6 @@ pipeline {
                         -DrepositoryId=nexus \\
                         -Durl=${NEXUS_URL} \\
                         -DgeneratePom=true \\
-                        -DrepositoryLayout=default \\
                         -Dusername=${NEXUS_CREDENTIALS_USR} \\
                         -Dpassword=${NEXUS_CREDENTIALS_PSW}
                     """
