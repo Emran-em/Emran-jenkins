@@ -20,7 +20,6 @@
    </properties>
 
    <dependencies>
-       <!-- Provided by your app server/container -->
        <dependency>
            <groupId>javax.servlet</groupId>
            <artifactId>javax.servlet-api</artifactId>
