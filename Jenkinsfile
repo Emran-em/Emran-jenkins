@@ -48,8 +48,8 @@ pipeline {
                             -DrepositoryId=nexus \\
                             -Durl=${NEXUS_URL} \\
                             -DgeneratePom=true \\
-                            -Dusername=${NEXUS_USR} \\ // Use the variable injected by withCredentials
-                            -Dpassword=${NEXUS_PSW}  // Use the variable injected by withCredentials
+                            -Dusername=${NEXUS_USR} \\
+                            -Dpassword=${NEXUS_PSW}
                         """
                     }
                 }
