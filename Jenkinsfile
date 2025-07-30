@@ -38,19 +38,8 @@ pipeline {
                     def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
                     // IMPORTANT: Hardcoding credentials directly like this is INSECURE for production.
                     // This is for debugging purposes only to isolate the authentication issue.
-                    sh """
-                        mvn deploy:deploy-file \\
-                        -DgroupId=com.javatpoint \\
-                        -DartifactId=SimpleCustomerApp \\
-                        -Dversion=1.0.0-SNAPSHOT \\
-                        -Dpackaging=war \\
-                        -Dfile=${warFile} \\
-                        -DrepositoryId=nexus \\
-                        -Durl=${NEXUS_URL} \\
-                        -DgeneratePom=true \\
-                        -Dusername=admin \\
-                        -Dpassword=123456
-                    """
+                    // Changed to a single line to avoid potential shell interpretation issues with backslashes.
+                    sh "mvn deploy:deploy-file -DgroupId=com.javatpoint -DartifactId=SimpleCustomerApp -Dversion=1.0.0-SNAPSHOT -Dpackaging=war -Dfile=${warFile} -DrepositoryId=nexus -Durl=${NEXUS_URL} -DgeneratePom=true -Dusername=admin -Dpassword=123456"
                 }
             }
         }
