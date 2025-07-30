@@ -6,10 +6,9 @@ pipeline {
     }
 
     environment {
-        SONARQUBE = 'MySonar'                          // Jenkins SonarQube server config name
-        NEXUS_CREDENTIALS = credentials('Nexus_server') // Jenkins credentials ID with username/password
-        NEXUS_URL = 'http://3.85.130.86:8081/repository/devops/' // Nexus custom repo URL
-        SLACK_CHANNEL = '#new-channel'                 // Slack channel for notification
+        SONARQUBE = 'MySonar'
+        NEXUS_URL = 'http://3.85.130.86:8081/repository/devops/'
+        SLACK_CHANNEL = '#new-channel'
     }
 
     stages {
@@ -37,19 +36,22 @@ pipeline {
             steps {
                 script {
                     def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
-                    sh """
-                        mvn deploy:deploy-file \\
-                        -DgroupId=com.javatpoint \\
-                        -DartifactId=SimpleCustomerApp \\
-                        -Dversion=1.0.0-SNAPSHOT \\
-                        -Dpackaging=war \\
-                        -Dfile=${warFile} \\
-                        -DrepositoryId=nexus \\
-                        -Durl=${NEXUS_URL} \\
-                        -DgeneratePom=true \\
-                        -Dusername=${NEXUS_CREDENTIALS_USR} \\
-                        -Dpassword=${NEXUS_CREDENTIALS_PSW}
-                    """
+                    // Use withCredentials to inject username and password variables securely
+                    withCredentials([usernamePassword(credentialsId: 'Nexus_server', usernameVariable: 'NEXUS_USR', passwordVariable: 'NEXUS_PSW')]) {
+                        sh """
+                            mvn deploy:deploy-file \\
+                            -DgroupId=com.javatpoint \\
+                            -DartifactId=SimpleCustomerApp \\
+                            -Dversion=1.0.0-SNAPSHOT \\
+                            -Dpackaging=war \\
+                            -Dfile=${warFile} \\
+                            -DrepositoryId=nexus \\
+                            -Durl=${NEXUS_URL} \\
+                            -DgeneratePom=true \\
+                            -Dusername=${NEXUS_USR} \\ // Use the variable injected by withCredentials
+                            -Dpassword=${NEXUS_PSW}  // Use the variable injected by withCredentials
+                        """
+                    }
                 }
             }
         }
