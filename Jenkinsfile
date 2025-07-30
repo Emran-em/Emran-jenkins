@@ -6,10 +6,10 @@ pipeline {
     }
 
     environment {
-        SONARQUBE = 'MySonar'
-        NEXUS_CREDENTIALS = credentials('Nexus_server') // ✅ Using correct ID
-        NEXUS_URL = 'http://3.85.130.86:8081/repository/devops/' // ✅ Updated from maven-releases to devops
-        SLACK_CHANNEL = '#new-channel'
+        SONARQUBE = 'MySonar'                          // Jenkins SonarQube server config name
+        NEXUS_CREDENTIALS = credentials('Nexus_server') // Jenkins credentials ID with username/password
+        NEXUS_URL = 'http://3.85.130.86:8081/repository/devops/' // Nexus custom repo URL
+        SLACK_CHANNEL = '#new-channel'                 // Slack channel for notification
     }
 
     stages {
