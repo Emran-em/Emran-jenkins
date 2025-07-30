@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     tools {
-        maven 'MAVEN_HOME' // Your configured Maven tool label
+        maven 'MAVEN_HOME'
     }
 
     environment {
-        SONARQUBE = 'MySonar'                          // Your SonarQube server configuration name
-        NEXUS_CREDENTIALS = credentials('Nexus_server') // Nexus credentials ID
-        NEXUS_URL = 'http://3.92.29.53:8081/repository/maven-releases/' // Updated repo URL
+        SONARQUBE = 'MySonar'
+        NEXUS_CREDENTIALS = credentials('Nexus_server')
+        NEXUS_URL = 'http://3.92.29.53:8081/repository/maven-releases/'
         SLACK_TOKEN = credentials('slack')
         SLACK_CHANNEL = '#new-channel'
     }
@@ -37,12 +37,13 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
-                    def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
+                    // Get the correct WAR file name based on your artifactId and version:
+                    def warFile = sh(script: "ls target/SimpleCustomerApp*.war", returnStdout: true).trim()
                     sh """
                         mvn deploy:deploy-file \\
-                        -DgroupId=com.hiring \\
-                        -DartifactId=hiring-app \\
-                        -Dversion=1.0.0 \\
+                        -DgroupId=com.javatpoint \\
+                        -DartifactId=SimpleCustomerApp \\
+                        -Dversion=1.0.0-SNAPSHOT \\
                         -Dpackaging=war \\
                         -Dfile=${warFile} \\
                         -DrepositoryId=nexus \\
