@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         SONARQUBE = 'MySonar'
-        NEXUS_URL = 'http://34.204.71.153:8081/repository/devops/' // Updated Nexus URL
+        NEXUS_URL = 'http://34.204.71.153:8081/repository/devops/'
         SLACK_CHANNEL = '#new-channel'
     }
 
@@ -36,22 +36,21 @@ pipeline {
             steps {
                 script {
                     def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
-                    // Use withCredentials to inject username and password variables securely
-                    withCredentials([usernamePassword(credentialsId: 'Nexus_server', usernameVariable: 'NEXUS_USR', passwordVariable: 'NEXUS_PSW')]) {
-                        sh """
-                            mvn deploy:deploy-file \\
-                            -DgroupId=com.javatpoint \\
-                            -DartifactId=SimpleCustomerApp \\
-                            -Dversion=1.0.0-SNAPSHOT \\
-                            -Dpackaging=war \\
-                            -Dfile=${warFile} \\
-                            -DrepositoryId=nexus \\
-                            -Durl=${NEXUS_URL} \\
-                            -DgeneratePom=true \\
-                            -Dusername=${NEXUS_USR} \\
-                            -Dpassword=${NEXUS_PSW}
-                        """
-                    }
+                    // IMPORTANT: Hardcoding credentials directly like this is INSECURE for production.
+                    // This is for debugging purposes only to isolate the authentication issue.
+                    sh """
+                        mvn deploy:deploy-file \\
+                        -DgroupId=com.javatpoint \\
+                        -DartifactId=SimpleCustomerApp \\
+                        -Dversion=1.0.0-SNAPSHOT \\
+                        -Dpackaging=war \\
+                        -Dfile=${warFile} \\
+                        -DrepositoryId=nexus \\
+                        -Durl=${NEXUS_URL} \\
+                        -DgeneratePom=true \\
+                        -Dusername=admin \\
+                        -Dpassword=123456
+                    """
                 }
             }
         }
