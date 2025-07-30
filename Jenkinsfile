@@ -7,8 +7,8 @@ pipeline {
 
     environment {
         SONARQUBE = 'MySonar'
-        NEXUS_CREDENTIALS = credentials('Nexus_server')
-        NEXUS_URL = 'http://3.85.130.86:8081/repository/maven-releases/'  // ✅ Updated with working public IP
+        NEXUS_CREDENTIALS = credentials('Nexus_server') // ✅ Using correct ID
+        NEXUS_URL = 'http://3.85.130.86:8081/repository/devops/' // ✅ Updated from maven-releases to devops
         SLACK_CHANNEL = '#new-channel'
     }
 
