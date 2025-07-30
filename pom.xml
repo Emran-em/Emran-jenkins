@@ -1,79 +1,54 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.hiring</groupId>
-    <artifactId>hiring-app</artifactId>
-    <version>1.0.0</version>
-    <packaging>war</packaging>
+   <groupId>com.javatpoint</groupId>
+   <artifactId>SimpleCustomerApp</artifactId>
+   <version>1.0.0-SNAPSHOT</version>
+   <packaging>war</packaging>
 
-    <name>Hiring App</name>
-    <url>https://github.com/betawins/hiring-app</url>
-    <description>Web application for hiring management</description>
+   <name>SimpleCustomerApp</name>
+   <description>Sample Java web application for customer management</description>
+   <url>https://github.com/mubeen-hub78/mub_simplecutomerapp</url>
 
-    <properties>
-        <java.version>11</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <surefire.plugin.version>3.0.0-M7</surefire.plugin.version>
-        <war.plugin.version>3.3.1</war.plugin.version>
-        <sonar.maven.plugin.version>3.9.0.2155</sonar.maven.plugin.version>
-    </properties>
+   <properties>
+       <maven.compiler.source>1.8</maven.compiler.source>
+       <maven.compiler.target>1.8</maven.compiler.target>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+   </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Add more dependencies if needed -->
-    </dependencies>
+   <dependencies>
+       <!-- Provided by your app server/container -->
+       <dependency>
+           <groupId>javax.servlet</groupId>
+           <artifactId>javax.servlet-api</artifactId>
+           <version>4.0.1</version>
+           <scope>provided</scope>
+       </dependency>
+   </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>${war.plugin.version}</version>
-                <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.plugin.version}</version>
-                <configuration>
-                    <testFailureIgnore>false</testFailureIgnore>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>${sonar.maven.plugin.version}</version>
-            </plugin>
-        </plugins>
-    </reporting>
-
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.11.0</version>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+                <encoding>UTF-8</encoding>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-war-plugin</artifactId>
+            <version>3.3.2</version>
+            <configuration>
+               <failOnMissingWebXml>false</failOnMissingWebXml>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>
