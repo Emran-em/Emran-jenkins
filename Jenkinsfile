@@ -1,82 +1,56 @@
 pipeline {
-    agent {
-        label "master"
-    }
+    agent any
+
     tools {
-        // Note: this should match with the tool name configured in your jenkins instance (JENKINS_URL/configureTools/)
-        maven "MVN_HOME"
-        
+        maven 'MAVEN_HOME'
     }
-	 environment {
-        // This can be nexus3 or nexus2
-        NEXUS_VERSION = "nexus3"
-        // This can be http or https
-        NEXUS_PROTOCOL = "http"
-        // Where your Nexus is running
-        NEXUS_URL = "18.216.151.197:8081/"
-        // Repository where we will upload the artifact
-        NEXUS_REPOSITORY = "soanrqube"
-        // Jenkins credential id to authenticate to Nexus OSS
-        NEXUS_CREDENTIAL_ID = "nexus_keygen"
+
+    environment {
+        SONARQUBE = 'MySonar'
+        NEXUS_URL = 'http://34.204.71.153:8081/repository/devops/'
+        SLACK_CHANNEL = '#new-channel'
     }
+
     stages {
-        stage("clone code") {
+        stage('Checkout') {
             steps {
-                script {
-                    // Let's clone the source
-                    git 'https://github.com/betawins/sabear_simplecutomerapp.git';
+                git branch: 'master', url: 'https://github.com/mubeen-hub78/mub_simplecutomerapp.git'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE}") {
+                    sh 'mvn clean verify sonar:sonar'
                 }
             }
         }
-        stage("mvn build") {
+
+        stage('Build WAR') {
+            steps {
+                sh 'mvn package -DskipTests'
+            }
+        }
+
+        stage('Upload to Nexus') {
             steps {
                 script {
-                    // If you are using Windows then you should use "bat" step
-                    // Since unit testing is out of the scope we skip them
-                    sh 'mvn -Dmaven.test.failure.ignore=true install'
+                    def warFile = sh(script: "ls target/*.war", returnStdout: true).trim()
+                    // IMPORTANT: Hardcoding credentials directly like this is INSECURE for production.
+                    // This is for debugging purposes only to isolate the authentication issue.
+                    // Changed to a single line to avoid potential shell interpretation issues with backslashes.
+                    sh "mvn deploy:deploy-file -DgroupId=com.javatpoint -DartifactId=SimpleCustomerApp -Dversion=1.0.0-SNAPSHOT -Dpackaging=war -Dfile=${warFile} -DrepositoryId=nexus -Durl=${NEXUS_URL} -DgeneratePom=true -Dusername=admin -Dpassword=123456"
                 }
             }
         }
-        stage("publish to nexus") {
-            steps {
-                script {
-                    // Read POM xml file using 'readMavenPom' step , this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
-                    pom = readMavenPom file: "pom.xml";
-                    // Find built artifact under target folder
-                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
-                    // Print some info from the artifact found
-                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
-                    // Extract the path from the File found
-                    artifactPath = filesByGlob[0].path;
-                    // Assign to a boolean response verifying If the artifact name exists
-                    artifactExists = fileExists artifactPath;
-                    if(artifactExists) {
-                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
-                        nexusArtifactUploader(
-                            nexusVersion: NEXUS_VERSION,
-                            protocol: NEXUS_PROTOCOL,
-                            nexusUrl: NEXUS_URL,
-			    groupId: pom.groupId,
-                            version: pom.version,
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
-                            artifacts: [
-                                // Artifact generated such as .jar, .ear and .war files.
-                                [artifactId: pom.artifactId,
-                                classifier: '',
-                                file: artifactPath,
-                                type: pom.packaging],
-                                // Lets upload the pom.xml file for additional information for Transitive dependencies
-                                [artifactId: pom.artifactId,
-                                classifier: '',
-                                file: "pom.xml",
-                                type: "pom"]
-                            ]
-                        );
-                    } else {
-                        error "*** File: ${artifactPath}, could not be found";
-                    }
-                }
+    }
+
+    post {
+        always {
+            script {
+                def buildStatus = currentBuild.currentResult ?: 'SUCCESS'
+                def message = "${buildStatus}: Job ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Details>)"
+                slackSend(channel: env.SLACK_CHANNEL, tokenCredentialId: 'slack', message: message)
             }
         }
     }
