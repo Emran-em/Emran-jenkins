@@ -52,45 +52,56 @@ pipeline {
 		     }
 		}
 	    }
-        stage("publish to nexus") {
-            steps {
-                script {
-                    // Read POM xml file using 'readMavenPom' step , this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
-                    pom = readMavenPom file: "pom.xml";
-                    // Find built artifact under target folder
-                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
-                    // Print some info from the artifact found
-                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
-                    // Extract the path from the File found
-                    artifactPath = filesByGlob[0].path;
-                    // Assign to a boolean response verifying If the artifact name exists
-                    artifactExists = fileExists artifactPath;
-                    if(artifactExists) {
-                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
-                        nexusArtifactUploader(
-                            nexusVersion: NEXUS_VERSION,
-                            protocol: NEXUS_PROTOCOL,
-                            nexusUrl: NEXUS_URL,
-			    groupId: pom.groupId,
-                            version: pom.version,
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
-                            artifacts: [
-                                // Artifact generated such as .jar, .ear and .war files.
-                                [artifactId: pom.artifactId,
-                                classifier: '',
-                                file: artifactPath,
-                                type: pom.packaging],
-                                // Lets upload the pom.xml file for additional information for Transitive dependencies
-                                [artifactId: pom.artifactId,
-                                classifier: '',
-                                file: "pom.xml",
-                                type: "pom"]
-                            ]
-                        );
-                    } else {
-                        error "*** File: ${artifactPath}, could not be found";
-                    }
+    stage("publish to nexus") {
+        steps {
+            script {
+                // Parse POM using XmlSlurper (safe in Jenkins sandbox)
+                def pom = new XmlSlurper().parse(new File("pom.xml"))
+
+                def groupId    = pom.groupId.text()
+                def artifactId = pom.artifactId.text()
+                def version    = pom.version.text()
+                def packaging  = pom.packaging.text()
+
+                // Find built artifact under target folder
+                def filesByGlob = findFiles(glob: "target/*.${packaging}")
+
+                if (filesByGlob.length == 0) {
+                    error "*** No artifact found in target/*.${packaging}"
+                }
+
+                // Print some info about the artifact
+                echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
+
+                def artifactPath = filesByGlob[0].path
+                def artifactExists = fileExists artifactPath
+
+                if (artifactExists) {
+                    echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version ${version}"
+
+                    nexusArtifactUploader(
+                        nexusVersion: NEXUS_VERSION,
+                        protocol: NEXUS_PROTOCOL,
+                        nexusUrl: NEXUS_URL,
+                        groupId: groupId,
+                        version: version,
+                        repository: NEXUS_REPOSITORY,
+                        credentialsId: NEXUS_CREDENTIAL_ID,
+                        artifacts: [
+                            // Artifact generated (jar/war/ear)
+                            [artifactId: artifactId,
+                            classifier: '',
+                            file: artifactPath,
+                            type: packaging],
+                            // Upload pom.xml as metadata
+                            [artifactId: artifactId,
+                            classifier: '',
+                            file: "pom.xml",
+                            type: "pom"]
+                        ]
+                    )
+                } else {
+                    error "*** File: ${artifactPath}, could not be found"
                 }
             }
         }
