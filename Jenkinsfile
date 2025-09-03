@@ -109,7 +109,7 @@ pipeline {
                 channel: "#jenkins-integration",
                 color: "good",
                 message: "✅ Build, Nexus Upload & Deployment Successful: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                tokenCredentialId: "slack-token"
+                tokenCredentialId: "Slackid"
             )
         }
         failure {
