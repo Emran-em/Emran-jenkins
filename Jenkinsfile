@@ -108,7 +108,7 @@ pipeline {
             slackSend(
                 channel: "#jenkins-integration",
                 color: "good",
-                message: "✅ Build, Nexus Upload & Deployment Successful.by Yunus: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                message: "Declarative pipeline for Simple Customer App has been successfully deployed in Tomcat :white_check_mark: by Yunus for Job:: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
                 tokenCredentialId: "Slackid"
             )
         }
