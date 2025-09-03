@@ -1,7 +1,23 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven'   // Configure in Jenkins -> Global Tool Configuration
+        jdk 'Java8'     // Configure JDK 1.8 in Jenkins tools
+    }
+
+    environment {
+        NEXUS_URL = 'http://44.206.236.146:8081/repository/maven-releases/'   // 🔄 replace with your Nexus repo URL
+        NEXUS_REPO = 'nexus'                                          // 🔄 must match <id> in settings.xml
+    }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
@@ -11,28 +27,37 @@ pipeline {
         stage('Publish to Nexus') {
             steps {
                 script {
-                    // Read pom.xml for values except packaging
+                    // Read groupId, artifactId, version from pom.xml
                     def pom = readMavenPom file: 'pom.xml'
 
                     def groupId = pom.groupId
                     def artifactId = pom.artifactId
                     def version = pom.version
-                    def packaging = "war"   // hardcode to avoid sandbox error
+                    def packaging = "war"   // ✅ hardcode to avoid sandbox restriction
 
                     echo "Publishing ${groupId}:${artifactId}:${version} as ${packaging}"
 
                     sh """
                         mvn deploy:deploy-file \
-                        -DgroupId=${groupId} \
-                        -DartifactId=${artifactId} \
-                        -Dversion=${version} \
-                        -Dpackaging=${packaging} \
-                        -Dfile=target/${artifactId}-${version}.${packaging} \
-                        -DrepositoryId=nexus \
-                        -Durl=http://<NEXUS_URL>/repository/maven-releases/
+                            -DgroupId=${groupId} \
+                            -DartifactId=${artifactId} \
+                            -Dversion=${version} \
+                            -Dpackaging=${packaging} \
+                            -Dfile=target/${artifactId}-${version}.${packaging} \
+                            -DrepositoryId=${NEXUS_REPO} \
+                            -Durl=${NEXUS_URL}
                     """
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build & Deploy completed successfully!"
+        }
+        failure {
+            echo "❌ Build or Deploy failed!"
         }
     }
 }
