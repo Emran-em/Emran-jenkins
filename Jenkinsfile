@@ -100,17 +100,25 @@ pipeline {
                 }
             }
         }
+    }
 
-        stage("Slack Notification") {
-            steps {
-                script {
-                    slackSend(
-                        channel: "#jenkins-integration",
-                        color: "#36A64F",
-                        message: ":white_check_mark: Build, Nexus Upload & Deployment Successful by Yunus: ${env.JOB_NAME} [${env.BUILD_NUMBER}]"
-                    )
-                }
-            }
+    // ✅ Post-build Slack Notifications
+    post {
+        success {
+            slackSend(
+                channel: "#jenkins-integration",
+                color: "good",
+                message: "✅ Build, Nexus Upload & Deployment Successful: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                tokenCredentialId: "slack-token"
+            )
+        }
+        failure {
+            slackSend(
+                channel: "#jenkins-integration",
+                color: "danger",
+                message: "❌ Build/Deploy Failed: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                tokenCredentialId: "slack-token"
+            )
         }
     }
 }
