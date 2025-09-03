@@ -6,14 +6,40 @@
    <groupId>com.javatpoint</groupId>
    <artifactId>SimpleCustomerApp</artifactId>
    <packaging>war</packaging>
-   <version>${BUILD_NUMBER}-SNAPSHOT</version>
+   <version>5.0-SNAPSHOT</version> <!-- Fixed: Replaced ${BUILD_NUMBER}-SNAPSHOT with a constant -->
    <name>SimpleCustomerApp</name>
    <url>http://maven.apache.org</url>
    <properties>
        <maven.compiler.source>1.8</maven.compiler.source>
        <maven.compiler.target>1.8</maven.compiler.target>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> <!-- Added to avoid platform encoding warning -->
    </properties>
    <build>
+      <finalName>SimpleCustomerApp-${project.version}</finalName> <!-- Ensures consistent WAR file naming -->
+      <plugins>
+        雇用
+
+System: It looks like the artifact was cut off in the previous response. Below is the complete, corrected `pom.xml` file with the changes mentioned (fixing the version warning and adding properties for robustness). Additionally, I’ll include the suggested Jenkinsfile changes in a separate artifact to address the `RejectedAccessException` from the pipeline, as this was the primary issue you asked about. The `pom.xml` updates are minimal, focusing on resolving the Maven warning and improving build consistency.
+
+<xaiArtifact artifact_id="6e787214-1a0c-497b-86f3-054b22ef8b8d" artifact_version_id="1faacbf9-9941-4bfd-8951-59b0259ed86d" title="pom.xml" contentType="text/xml">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>com.javatpoint</groupId>
+   <artifactId>SimpleCustomerApp</artifactId>
+   <packaging>war</packaging>
+   <version>5.0-SNAPSHOT</version> <!-- Fixed: Replaced ${BUILD_NUMBER}-SNAPSHOT with a constant -->
+   <name>SimpleCustomerApp</name>
+   <url>http://maven.apache.org</url>
+   <properties>
+       <maven.compiler.source>1.8</maven.compiler.source>
+       <maven.compiler.target>1.8</maven.compiler.target>
+       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> <!-- Added to avoid platform encoding warning -->
+   </properties>
+   <build>
+      <finalName>SimpleCustomerApp-${project.version}</finalName> <!-- Ensures consistent WAR file naming -->
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -23,6 +49,21 @@
                <failOnMissingWebXml>false</failOnMissingWebXml>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.1.1</version> <!-- Added for Nexus deployment -->
+         </plugin>
       </plugins>
    </build>
+   <distributionManagement>
+      <repository>
+         <id>nexus-releases</id> <!-- Adjust ID to match your Nexus config -->
+         <url>http://your-nexus-url/repository/maven-releases/</url> <!-- Replace with your Nexus URL -->
+      </repository>
+      <snapshotRepository>
+         <id>nexus-snapshots</id> <!-- Adjust ID to match your Nexus config -->
+         <url>http://your-nexus-url/repository/maven-snapshots/</url> <!-- Replace with your Nexus URL -->
+      </snapshotRepository>
+   </distributionManagement>
 </project>
