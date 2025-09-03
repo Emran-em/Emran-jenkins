@@ -1,110 +1,116 @@
 pipeline {
     agent any
     tools {
-        // Note: this should match with the tool name configured in your jenkins instance (JENKINS_URL/configureTools/)
         maven "MVN_HOME"
-        
     }
-	 environment {
-        // This can be nexus3 or nexus2
+    environment {
+        // Nexus settings
         NEXUS_VERSION = "nexus3"
-        // This can be http or https
         NEXUS_PROTOCOL = "http"
-        // Where your Nexus is running
         NEXUS_URL = "44.206.236.146:8081/"
-        // Repository where we will upload the artifact
         NEXUS_REPOSITORY = "SimpleCustomerApp"
-        // Jenkins credential id to authenticate to Nexus OSS
         NEXUS_CREDENTIAL_ID = "nexus_keygen"
-	SCANNER_HOME = tool 'sonar_scanner'
+
+        // SonarQube
+        SCANNER_HOME = tool 'sonar_scanner'
     }
+
     stages {
         stage("clone code") {
             steps {
-                script {
-                    // Let's clone the source
-                    git 'https://github.com/betawins/sabear_simplecutomerapp.git';
-                }
+                git 'https://github.com/Shaik123-hu/sabear_simplecutomerapp.git'
             }
         }
+
         stage("mvn build") {
             steps {
-                script {
-                    // If you are using Windows then you should use "bat" step
-                    // Since unit testing is out of the scope we skip them
-                    sh 'mvn -Dmaven.test.failure.ignore=true clean install'
+                sh 'mvn -Dmaven.test.failure.ignore=true clean install'
+            }
+        }
+
+        stage("SonarCloud") {
+            steps {
+                withSonarQubeEnv('sonarqube_server') {
+                    sh '''
+                        $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectKey=Ncodeit \
+                        -Dsonar.projectName=Ncodeit \
+                        -Dsonar.projectVersion=2.0 \
+                        -Dsonar.sources=$WORKSPACE/src/ \
+                        -Dsonar.binaries=target/classes/com/visualpathit/account/controller/ \
+                        -Dsonar.junit.reportsPath=target/surefire-reports \
+                        -Dsonar.java.binaries=src/com/room/sample
+                    '''
                 }
             }
         }
-	stage('SonarCloud') {
+
+        stage("publish to nexus") {
             steps {
-                withSonarQubeEnv('sonarqube_server') {
-				sh '$SCANNER_HOME/bin/sonar-scanner \
-				-Dsonar.projectKey=Ncodeit \
-				-Dsonar.projectName=Ncodeit \
-				-Dsonar.projectVersion=2.0 \
-				-Dsonar.sources=/var/lib/jenkins/workspace/$JOB_NAME/src/ \
-				-Dsonar.binaries=target/classes/com/visualpathit/account/controller/ \
-				-Dsonar.junit.reportsPath=target/surefire-reports \
-				-Dsonar.jacoco.reportPath=target/jacoco.exec \
-				-Dsonar.java.binaries=src/com/room/sample '
-				
-		     }
-		}
-	    }
-    stage("publish to nexus") {
-        steps {
-            script {
-                // Parse POM using XmlSlurper (safe in Jenkins sandbox)
-                def pom = new XmlSlurper().parse(new File("pom.xml"))
+                script {
+                    def pom = readMavenPom file: "pom.xml"
 
-                def groupId    = pom.groupId.text()
-                def artifactId = pom.artifactId.text()
-                def version    = pom.version.text()
-                def packaging  = pom.packaging.text()
+                    def groupId    = pom.groupId
+                    def artifactId = pom.artifactId
+                    def version    = pom.version
+                    def packaging  = pom.packaging
 
-                // Find built artifact under target folder
-                def filesByGlob = findFiles(glob: "target/*.${packaging}")
+                    def filesByGlob = findFiles(glob: "target/*.${packaging}")
+                    if (filesByGlob.length == 0) {
+                        error "*** No artifact found in target/*.${packaging}"
+                    }
 
-                if (filesByGlob.length == 0) {
-                    error "*** No artifact found in target/*.${packaging}"
+                    def artifactPath = filesByGlob[0].path
+                    if (fileExists(artifactPath)) {
+                        echo "*** Uploading ${artifactPath} to Nexus (group: ${groupId}, version: ${version}, packaging: ${packaging})"
+
+                        nexusArtifactUploader(
+                            nexusVersion: NEXUS_VERSION,
+                            protocol: NEXUS_PROTOCOL,
+                            nexusUrl: NEXUS_URL,
+                            groupId: groupId,
+                            version: version,
+                            repository: NEXUS_REPOSITORY,
+                            credentialsId: NEXUS_CREDENTIAL_ID,
+                            artifacts: [
+                                [artifactId: artifactId, classifier: '', file: artifactPath, type: packaging],
+                                [artifactId: artifactId, classifier: '', file: "pom.xml", type: "pom"]
+                            ]
+                        )
+                    } else {
+                        error "*** File: ${artifactPath}, could not be found"
+                    }
                 }
+            }
+        }
 
-                // Print some info about the artifact
-                echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
+        stage("Deploy to Tomcat") {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'tomcat', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+                    script {
+                        // Find the WAR file built by Maven
+                        def warFile = sh(script: "ls target/*.war | head -n 1", returnStdout: true).trim()
+                        echo "Deploying ${warFile} to Tomcat at context path /SimpleCustomerApp..."
+                        sh """
+                            curl -u $TOMCAT_USER:$TOMCAT_PASS \
+                                 -T ${warFile} \
+                                 "http://52.23.219.234:8080/manager/text/deploy?path=/SimpleCustomerApp&update=true"
+                        """
+                    }
+                }
+            }
+        }
 
-                def artifactPath = filesByGlob[0].path
-                def artifactExists = fileExists artifactPath
-
-                if (artifactExists) {
-                    echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version ${version}"
-
-                    nexusArtifactUploader(
-                        nexusVersion: NEXUS_VERSION,
-                        protocol: NEXUS_PROTOCOL,
-                        nexusUrl: NEXUS_URL,
-                        groupId: groupId,
-                        version: version,
-                        repository: NEXUS_REPOSITORY,
-                        credentialsId: NEXUS_CREDENTIAL_ID,
-                        artifacts: [
-                            // Artifact generated (jar/war/ear)
-                            [artifactId: artifactId,
-                            classifier: '',
-                            file: artifactPath,
-                            type: packaging],
-                            // Upload pom.xml as metadata
-                            [artifactId: artifactId,
-                            classifier: '',
-                            file: "pom.xml",
-                            type: "pom"]
-                        ]
+        stage("Slack Notification") {
+            steps {
+                script {
+                    slackSend(
+                        channel: "#jenkins-integration",
+                        color: "#36A64F",
+                        message: ":white_check_mark: Build, Nexus Upload & Deployment Successful by Yunus: ${env.JOB_NAME} [${env.BUILD_NUMBER}]"
                     )
-                } else {
-                    error "*** File: ${artifactPath}, could not be found"
                 }
             }
         }
     }
-  }
 }
