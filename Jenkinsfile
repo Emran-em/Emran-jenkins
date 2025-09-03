@@ -54,6 +54,10 @@ pipeline {
 	    }
     stage("publish to nexus") {
         steps {
+			sh 'mvn deploy -DskipTests'
+
+		}
+	}
             script {
                 // Parse POM using XmlSlurper (safe in Jenkins sandbox)
                 def pom = new XmlSlurper().parse(new File("pom.xml"))
