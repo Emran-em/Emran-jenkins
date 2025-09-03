@@ -117,7 +117,7 @@ pipeline {
                 channel: "#jenkins-integration",
                 color: "danger",
                 message: "❌ Build/Deploy Failed: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                tokenCredentialId: "slack-token"
+                tokenCredentialId: "Slackid"
             )
         }
     }
