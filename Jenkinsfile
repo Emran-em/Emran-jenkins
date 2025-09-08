@@ -21,10 +21,11 @@ pipeline {
     }
 
     stages {
-        stage("Setup Java 17") {
+        stage("Setup JDK") {
             steps {
                 script {
-                    env.JAVA_HOME = tool name: 'JDK17', type: 'jdk'
+                    // Use the Jenkins-configured JDK tool (replace 'JDK17' with exact name in Jenkins)
+                    env.JAVA_HOME = tool name: 'jdk', type: 'jdk'
                     env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
                     sh 'java -version'
                 }
