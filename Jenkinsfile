@@ -49,13 +49,17 @@ pipeline {
 
         stage("SonarQube Analysis") {
             steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh '''$SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectKey=emran-jenkins \
-                        -Dsonar.projectName="Emran Jenkins App" \
-                        -Dsonar.projectVersion=1.0 \
-                        -Dsonar.sources=src/main/java \
-                        -Dsonar.java.binaries=target/classes'''
+        withSonarQubeEnv('sonarqube-server') {
+            sh """
+                export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
+                /opt/sonar-scanner/bin/sonar-scanner \
+                    -Dsonar.projectKey=emran-jenkins \
+                    -Dsonar.projectName='Emran Jenkins App' \
+                    -Dsonar.projectVersion=1.0 \
+                    -Dsonar.sources=src/main/java \
+                    -Dsonar.java.binaries=target/classes \
+                    -Dsonar.java.home=/usr/lib/jvm/java-17-amazon-corretto.x86_64
+            """
                 }
             }
         }
