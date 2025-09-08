@@ -18,16 +18,19 @@ pipeline {
 
         // Slack details
         SLACK_CHANNEL = "#jenkins-integration"
+        
+        // Manual Java 17 path
+        JAVA_HOME = "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
+        PATH = "${JAVA_HOME}/bin:${PATH}"
     }
 
     stages {
         stage("Setup JDK") {
             steps {
                 script {
-                    // Use the Jenkins-configured JDK tool (replace 'JDK17' with exact name in Jenkins)
-                    env.JAVA_HOME = tool name: 'jdk', type: 'jdk'
-                    env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
                     sh 'java -version'
+                    sh 'javac -version'
+                    sh 'echo "JAVA_HOME is set to: $JAVA_HOME"'
                 }
             }
         }
