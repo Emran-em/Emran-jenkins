@@ -40,8 +40,6 @@ pipeline {
                         -Dsonar.projectKey=emran-jenkins \
                         -Dsonar.projectName="Emran Jenkins App" \
                         -Dsonar.projectVersion=1.0 \
-                        -Dsonar.host.url=http://13.218.94.129:9000/ \
-                        -Dsonar.login=$SQ \
                         -Dsonar.sources=src/main/java \
                         -Dsonar.java.binaries=target/classes '''
                 }
