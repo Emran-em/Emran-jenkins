@@ -2,15 +2,16 @@ pipeline {
     agent any
 
     tools {
-        maven 'MVN_HOME'
+        jdk 'JDK17'           // Use Java 17 globally
+        maven 'MVN_HOME'      // Maven tool configured in Jenkins
     }
 
     environment {
         // Nexus details
-        NEXUS_VERSION     = "nexus3"
-        NEXUS_PROTOCOL    = "http"
-        NEXUS_URL         = "3.83.214.6:8081"
-        NEXUS_REPOSITORY  = "Emran-NX-repo"
+        NEXUS_VERSION       = "nexus3"
+        NEXUS_PROTOCOL      = "http"
+        NEXUS_URL           = "3.83.214.6:8081"
+        NEXUS_REPOSITORY    = "Emran-NX-repo"
         NEXUS_CREDENTIAL_ID = "nexus-credentials"
 
         // SonarQube scanner tool
@@ -18,12 +19,6 @@ pipeline {
 
         // Slack details
         SLACK_CHANNEL = "#jenkins-integration"
-
-        // Force Java 17 for SonarQube compatibility
-        JAVA_HOME = "${tool 'JDK17'}"
-        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
-        
-        
     }
 
     stages {
@@ -40,15 +35,14 @@ pipeline {
         }
 
         stage("SonarQube Analysis") {
-            steps { sh 'java -version'
-                
+            steps {
                 withSonarQubeEnv('sonarqube-server') {
-                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                    sh """${SCANNER_HOME}/bin/sonar-scanner \
                         -Dsonar.projectKey=emran-jenkins \
                         -Dsonar.projectName="Emran Jenkins App" \
                         -Dsonar.projectVersion=1.0 \
                         -Dsonar.sources=src/main/java \
-                        -Dsonar.java.binaries=target/classes '''
+                        -Dsonar.java.binaries=target/classes"""
                 }
             }
         }
@@ -56,29 +50,26 @@ pipeline {
         stage("Publish to Nexus") {
             steps {
                 script {
-                    pom = readMavenPom file: "pom.xml"
-                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
-                    echo "${filesByGlob[0].name} ${filesByGlob[0].path}"
-                    artifactPath = filesByGlob[0].path
-                    artifactExists = fileExists artifactPath
-
-                    if (artifactExists) {
-                        nexusArtifactUploader(
-                            nexusVersion: NEXUS_VERSION,
-                            protocol: NEXUS_PROTOCOL,
-                            nexusUrl: NEXUS_URL,
-                            groupId: pom.groupId,
-                            version: pom.version,
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
-                            artifacts: [
-                                [artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging],
-                                [artifactId: pom.artifactId, classifier: '', file: "pom.xml", type: "pom"]
-                            ]
-                        )
-                    } else {
-                        error "*** File: ${artifactPath}, could not be found"
+                    def pom = readMavenPom file: "pom.xml"
+                    def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
+                    if (filesByGlob.size() == 0) {
+                        error "*** No artifact found to upload"
                     }
+                    def artifactPath = filesByGlob[0].path
+
+                    nexusArtifactUploader(
+                        nexusVersion: NEXUS_VERSION,
+                        protocol: NEXUS_PROTOCOL,
+                        nexusUrl: NEXUS_URL,
+                        groupId: pom.groupId,
+                        version: pom.version,
+                        repository: NEXUS_REPOSITORY,
+                        credentialsId: NEXUS_CREDENTIAL_ID,
+                        artifacts: [
+                            [artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging],
+                            [artifactId: pom.artifactId, classifier: '', file: "pom.xml", type: "pom"]
+                        ]
+                    )
                 }
             }
         }
@@ -87,11 +78,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'deployer', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                     script {
-                        // WAR file built by Maven
                         def warFile = sh(script: "ls target/*.war | head -n 1", returnStdout: true).trim()
-
-                        echo "Deploying ${warFile} to Tomcat at context path /emran-app ..."
-
+                        if (!fileExists(warFile)) {
+                            error "*** WAR file not found: ${warFile}"
+                        }
+                        echo "Deploying ${warFile} to Tomcat at /emran-app ..."
                         sh """
                             curl -u $TOMCAT_USER:$TOMCAT_PASS \
                                  -T ${warFile} \
@@ -108,7 +99,7 @@ pipeline {
                     slackSend(
                         channel: "${SLACK_CHANNEL}",
                         color: "#36a64f",
-                        message: "✅ Jenkins Declarative Pipeline for *Emran Jenkins App* deployed successfully to Tomcat! Job: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                        message: "✅ Jenkins Declarative Pipeline for *Emran Jenkins App* deployed successfully! Job: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
                         token: "${SLACK_TOKEN}"
                     )
                 }
