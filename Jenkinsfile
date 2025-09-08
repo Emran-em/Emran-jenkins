@@ -23,7 +23,7 @@ pipeline {
     stages {
         stage("Clone Code") {
             steps {
-                git branch: 'main', url: 'https://github.com/Emran-em/Emran-jenkins.git'
+                git branch: 'master', url: 'https://github.com/Emran-em/Emran-jenkins.git'
             }
         }
 
