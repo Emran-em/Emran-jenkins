@@ -22,10 +22,7 @@ pipeline {
         // Force Java 17 for SonarQube compatibility
         JAVA_HOME = "${tool 'JDK17'}"
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
-        sh '''
-                    java -version
-
-                    '''
+        
         
     }
 
@@ -43,7 +40,8 @@ pipeline {
         }
 
         stage("SonarQube Analysis") {
-            steps {
+            steps { sh 'java -version'
+                
                 withSonarQubeEnv('sonarqube-server') {
                     sh '''$SCANNER_HOME/bin/sonar-scanner \
                         -Dsonar.projectKey=emran-jenkins \
