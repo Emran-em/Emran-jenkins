@@ -24,6 +24,8 @@ pipeline {
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
         sh '''
                     java -version
+
+                    '''
         
     }
 
