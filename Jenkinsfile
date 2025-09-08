@@ -18,6 +18,10 @@ pipeline {
 
         // Slack details
         SLACK_CHANNEL = "#jenkins-integration"
+
+        // Force Java 17 for SonarQube compatibility
+        JAVA_HOME = "${tool 'JDK17'}"
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
