@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK17'           // Use Java 17 globally
-        maven 'MVN_HOME'      // Maven tool configured in Jenkins
+        maven 'MVN_HOME'
     }
 
     environment {
@@ -22,6 +21,16 @@ pipeline {
     }
 
     stages {
+        stage("Setup Java 17") {
+            steps {
+                script {
+                    env.JAVA_HOME = tool name: 'JDK17', type: 'jdk'
+                    env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+                    sh 'java -version'
+                }
+            }
+        }
+
         stage("Clone Code") {
             steps {
                 git branch: 'master', url: 'https://github.com/Emran-em/Emran-jenkins.git'
@@ -37,12 +46,12 @@ pipeline {
         stage("SonarQube Analysis") {
             steps {
                 withSonarQubeEnv('sonarqube-server') {
-                    sh """${SCANNER_HOME}/bin/sonar-scanner \
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
                         -Dsonar.projectKey=emran-jenkins \
                         -Dsonar.projectName="Emran Jenkins App" \
                         -Dsonar.projectVersion=1.0 \
                         -Dsonar.sources=src/main/java \
-                        -Dsonar.java.binaries=target/classes"""
+                        -Dsonar.java.binaries=target/classes'''
                 }
             }
         }
@@ -52,11 +61,10 @@ pipeline {
                 script {
                     def pom = readMavenPom file: "pom.xml"
                     def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
-                    if (filesByGlob.size() == 0) {
-                        error "*** No artifact found to upload"
+                    if (filesByGlob.length == 0) {
+                        error "*** File: target/*.${pom.packaging} not found"
                     }
                     def artifactPath = filesByGlob[0].path
-
                     nexusArtifactUploader(
                         nexusVersion: NEXUS_VERSION,
                         protocol: NEXUS_PROTOCOL,
@@ -79,9 +87,6 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'deployer', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                     script {
                         def warFile = sh(script: "ls target/*.war | head -n 1", returnStdout: true).trim()
-                        if (!fileExists(warFile)) {
-                            error "*** WAR file not found: ${warFile}"
-                        }
                         echo "Deploying ${warFile} to Tomcat at /emran-app ..."
                         sh """
                             curl -u $TOMCAT_USER:$TOMCAT_PASS \
@@ -99,7 +104,7 @@ pipeline {
                     slackSend(
                         channel: "${SLACK_CHANNEL}",
                         color: "#36a64f",
-                        message: "✅ Jenkins Declarative Pipeline for *Emran Jenkins App* deployed successfully! Job: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                        message: "✅ Jenkins Declarative Pipeline for *Emran Jenkins App* deployed successfully to Tomcat! Job: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
                         token: "${SLACK_TOKEN}"
                     )
                 }
