@@ -48,19 +48,20 @@ pipeline {
         }
 
         stage("SonarQube Analysis") {
-            steps {
-                withSonarQubeEnv('sonar_scanner) {
-                    sh """
-                        ${SCANNER_HOME}/bin/sonar-scanner \
-                          -Dsonar.projectKey=emran-jenkins \
-                          -Dsonar.sources=src \
-                          -Dsonar.java.binaries=target \
-                          -Dsonar.host.url=http://34.229.178.233:9001 \
-                          -Dsonar.login=sonarqube
-                    """
-                }
-            }
+    steps {
+        withSonarQubeEnv('sonarqube-server') {
+            sh """
+                ${SCANNER_HOME}/bin/sonar-scanner \
+                  -Dsonar.projectKey=emran-jenkins \
+                  -Dsonar.sources=src \
+                  -Dsonar.java.binaries=target \
+                  -Dsonar.host.url=http://34.229.178.233:9001 \
+                  -Dsonar.login=sonarqube
+            """
         }
+    }
+}
+
 
         stage("Publish to Nexus") {
             steps {
