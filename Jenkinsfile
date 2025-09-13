@@ -113,16 +113,19 @@ pipeline {
         }
 
         stage("Slack Notification") {
-            steps {
-                withCredentials([string(credentialsId: 'slack_notification', variable: 'SLACK_TOKEN')]) {
-                    slackSend(
-                        channel: "${SLACK_CHANNEL}",
-                        color: "#36a64f",
-                        message: "✅ Jenkins Declarative Pipeline for *Emran Jenkins App* deployed successfully to Tomcat! Job: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
-                        token: "${SLACK_TOKEN}"
-                    )
-                }
-            }
+    steps {
+        withCredentials([string(credentialsId: 'slack_notification', variable: 'SLACK_TOKEN')]) {
+            slackSend(
+                channel: "${SLACK_CHANNEL}",
+                color: "#36a64f",  // Green color for success
+                message: """✅ *Deployment Successful*
+• *Application:* Emran Jenkins App
+• *Environment:* Tomcat
+• *Job:* ${env.JOB_NAME}
+• *Build:* #${env.BUILD_NUMBER}
+• *URL:* ${env.BUILD_URL}""",
+                token: "${SLACK_TOKEN}"
+            )
         }
     }
 }
