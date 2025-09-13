@@ -55,10 +55,12 @@ pipeline {
                 /opt/sonar-scanner/bin/sonar-scanner \
                     -Dsonar.projectKey=emran-jenkins \
                     -Dsonar.projectName='Emran Jenkins App' \
-                    -Dsonar.projectVersion=1.0 \
+                    -Dsonar.projectVersion=2.0 \
+                    -Dsonar.sources=src/
                     -Dsonar.sources=src/main/java \
                     -Dsonar.java.binaries=target/classes \
                     -Dsonar.java.home=/usr/lib/jvm/java-17-amazon-corretto.x86_64
+                    -Dsonar.java.binaries=src/
             """
                 }
             }
