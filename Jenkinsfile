@@ -80,12 +80,12 @@ pipeline {
 
             nexusArtifactUploader(
                 nexusVersion: NEXUS_VERSION,
-                protocol: NEXUS_PROTOCOL,
-                nexusUrl: "18.206.235.190:8081",
-                groupId: groupId,
-                version: version,
-                repository: Emran-NX-repo,
-                credentialsId: NX,
+                protocol: 'http',
+                nexusUrl: '18.206.235.190:8081',
+                groupId: 'com.emran',
+                version: '1.0-SNAPSHOT',
+                repository: 'Emran-NX-repo',
+                credentialsId: 'NX',
                 artifacts: [
                     [artifactId: artifactId, classifier: '', file: artifactPath, type: packaging],
                     [artifactId: artifactId, classifier: '', file: "pom.xml", type: "pom"]
