@@ -63,38 +63,37 @@ pipeline {
         }
 
         stage("Publish to Nexus") {
-    steps {
-        script {
-            def artifactId = sh(script: "mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout", returnStdout: true).trim()
-            def groupId    = sh(script: "mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout", returnStdout: true).trim()
-            def version    = sh(script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
-            def packaging  = sh(script: "mvn help:evaluate -Dexpression=project.packaging -q -DforceStdout", returnStdout: true).trim()
+            steps {
+                script {
+                    def artifactId = sh(script: "mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout", returnStdout: true).trim()
+                    def groupId    = sh(script: "mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout", returnStdout: true).trim()
+                    def version    = sh(script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
+                    def packaging  = sh(script: "mvn help:evaluate -Dexpression=project.packaging -q -DforceStdout", returnStdout: true).trim()
 
-            def filesByGlob = findFiles(glob: "target/*.${packaging}")
-            if (filesByGlob.length == 0) {
-                error "No ${packaging} file found in target directory!"
+                    def filesByGlob = findFiles(glob: "target/*.${packaging}")
+                    if (filesByGlob.length == 0) {
+                        error "No ${packaging} file found in target directory!"
+                    }
+                    def artifactPath = filesByGlob[0].path
+
+                    echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version: ${version}"
+
+                    nexusArtifactUploader(
+                        nexusVersion: NEXUS_VERSION,
+                        protocol: 'http',
+                        nexusUrl: '18.206.235.190:8081',
+                        groupId: 'com.emran',
+                        version: '1.0-SNAPSHOT',
+                        repository: 'Emran-NX-repo',
+                        credentialsId: 'NX',
+                        artifacts: [
+                            [artifactId: artifactId, classifier: '', file: artifactPath, type: packaging],
+                            [artifactId: artifactId, classifier: '', file: "pom.xml", type: "pom"]
+                        ]
+                    )
+                }
             }
-            def artifactPath = filesByGlob[0].path
-
-            echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version: ${version}"
-
-            nexusArtifactUploader(
-                nexusVersion: NEXUS_VERSION,
-                protocol: 'http',
-                nexusUrl: '18.206.235.190:8081',
-                groupId: 'com.emran',
-                version: '1.0-SNAPSHOT',
-                repository: 'Emran-NX-repo',
-                credentialsId: 'NX',
-                artifacts: [
-                    [artifactId: artifactId, classifier: '', file: artifactPath, type: packaging],
-                    [artifactId: artifactId, classifier: '', file: "pom.xml", type: "pom"]
-                ]
-            )
         }
-    }
-}
-
 
         stage("Deploy to Tomcat") {
             steps {
@@ -113,19 +112,43 @@ pipeline {
         }
 
         stage("Slack Notification") {
-    steps {
-        withCredentials([string(credentialsId: 'slack_notification', variable: 'SLACK_TOKEN')]) {
-            slackSend(
-                channel: "${SLACK_CHANNEL}",
-                color: "#36a64f",  // Green color for success
-                message: """✅ *Deployment Successful*
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'slack_notification', variable: 'SLACK_TOKEN')]) {
+                        slackSend(
+                            channel: "${env.SLACK_CHANNEL}",
+                            color: "#36a64f",
+                            message: """✅ *Deployment Successful*
 • *Application:* Emran Jenkins App
 • *Environment:* Tomcat
 • *Job:* ${env.JOB_NAME}
 • *Build:* #${env.BUILD_NUMBER}
 • *URL:* ${env.BUILD_URL}""",
-                token: "${SLACK_TOKEN}"
-            )
+                            token: "${SLACK_TOKEN}"
+                        )
+                    }
+                }
+            }
+        }
+    } // End of stages
+    
+    // Optional: Add post section for failure notifications
+    post {
+        failure {
+            script {
+                withCredentials([string(credentialsId: 'slack_notification', variable: 'SLACK_TOKEN')]) {
+                    slackSend(
+                        channel: "${env.SLACK_CHANNEL}",
+                        color: "#FF0000",
+                        message: """❌ *Deployment Failed*
+• *Application:* Emran Jenkins App
+• *Job:* ${env.JOB_NAME}
+• *Build:* #${env.BUILD_NUMBER}
+• *URL:* ${env.BUILD_URL}""",
+                        token: "${SLACK_TOKEN}"
+                    )
+                }
+            }
         }
     }
-}
+} // End of pipeline - THIS CLOSING BRACE WAS MISSING
