@@ -13,13 +13,13 @@ pipeline {
         NEXUS_REPOSITORY    = "Emran-NX-repo"
         NEXUS_CREDENTIAL_ID = "NX"
 
-        // SonarQube scanner tool (configured in Jenkins → Global Tool Configuration)
+        // SonarQube scanner tool
         SCANNER_HOME = tool 'sonar_scanner'
 
         // Slack details
         SLACK_CHANNEL = "#jenkins-integration"
         
-        // Java 17 path (manual override)
+        // Java 17 path
         JAVA_HOME = "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
         PATH = "${JAVA_HOME}/bin:${PATH}"
     }
@@ -48,55 +48,61 @@ pipeline {
         }
 
         stage("SonarQube Analysis") {
-    steps {
-        withSonarQubeEnv('sonarqube-server') {
-            sh """
-                ${SCANNER_HOME}/bin/sonar-scanner \
-                  -Dsonar.projectKey=emran-jenkins \
-                  -Dsonar.sources=src \
-                  -Dsonar.java.binaries=target \
-                  -Dsonar.host.url=http://34.229.178.233:9001 \
-                  -Dsonar.login=sonarqube
-            """
+            steps {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh """
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                          -Dsonar.projectKey=emran-jenkins \
+                          -Dsonar.sources=src \
+                          -Dsonar.java.binaries=target \
+                          -Dsonar.host.url=http://34.229.178.233:9001 \
+                          -Dsonar.login=sonarqube
+                    """
+                }
+            }
         }
-    }
-}
-
 
         stage("Publish to Nexus") {
             steps {
                 script {
+                    // Read POM safely
                     def pom = readMavenPom file: "pom.xml"
-                    def filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
-                    def artifactPath = filesByGlob[0].path
-                    if (fileExists(artifactPath)) {
-                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version: ${pom.version}"
-                        nexusArtifactUploader(
-                            nexusVersion: NEXUS_VERSION,
-                            protocol: NEXUS_PROTOCOL,
-                            nexusUrl: NEXUS_URL,
-                            groupId: pom.groupId,
-                            version: pom.version,
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
-                            artifacts: [
-                                [
-                                    artifactId: pom.artifactId,
-                                    classifier: '',
-                                    file: artifactPath,
-                                    type: pom.packaging
-                                ],
-                                [
-                                    artifactId: pom.artifactId,
-                                    classifier: '',
-                                    file: "pom.xml",
-                                    type: "pom"
-                                ]
-                            ]
-                        )
-                    } else {
-                        error "*** File: ${artifactPath}, could not be found"
+                    def version = pom.getProperties()['project.version'] ?: '1.0-SNAPSHOT'
+                    def artifactId = pom.getArtifactId()
+                    def groupId = pom.getGroupId()
+                    def packaging = pom.getPackaging()
+
+                    def filesByGlob = findFiles(glob: "target/*.${packaging}")
+                    if (filesByGlob.length == 0) {
+                        error "No ${packaging} file found in target directory!"
                     }
+
+                    def artifactPath = filesByGlob[0].path
+                    echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version: ${version}"
+
+                    nexusArtifactUploader(
+                        nexusVersion: NEXUS_VERSION,
+                        protocol: NEXUS_PROTOCOL,
+                        nexusUrl: NEXUS_URL,
+                        groupId: groupId,
+                        version: version,
+                        repository: NEXUS_REPOSITORY,
+                        credentialsId: NEXUS_CREDENTIAL_ID,
+                        artifacts: [
+                            [
+                                artifactId: artifactId,
+                                classifier: '',
+                                file: artifactPath,
+                                type: packaging
+                            ],
+                            [
+                                artifactId: artifactId,
+                                classifier: '',
+                                file: "pom.xml",
+                                type: "pom"
+                            ]
+                        ]
+                    )
                 }
             }
         }
