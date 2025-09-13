@@ -13,13 +13,13 @@ pipeline {
         NEXUS_REPOSITORY    = "Emran-NX-repo"
         NEXUS_CREDENTIAL_ID = "NX"
 
-        // SonarQube scanner tool
+        // SonarQube scanner tool (configured in Jenkins → Global Tool Configuration)
         SCANNER_HOME = tool 'sonar_scanner'
 
         // Slack details
         SLACK_CHANNEL = "#jenkins-integration"
         
-        // Manual Java 17 path
+        // Java 17 path (manual override)
         JAVA_HOME = "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
         PATH = "${JAVA_HOME}/bin:${PATH}"
     }
@@ -49,19 +49,15 @@ pipeline {
 
         stage("SonarQube Analysis") {
             steps {
-        withSonarQubeEnv('sonar_scanner') {
-            sh """
-                export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
-                /opt/sonar-scanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=emran-jenkins \
-                    -Dsonar.projectName='Emran Jenkins App' \
-                    -Dsonar.projectVersion=2.0 \
-                    -Dsonar.sources=src/
-                    -Dsonar.sources=src/main/java \
-                    -Dsonar.java.binaries=target/classes \
-                    -Dsonar.java.home=/usr/lib/jvm/java-17-amazon-corretto.x86_64
-                    -Dsonar.java.binaries=src/
-            """
+                withSonarQubeEnv('sonar_scanner) {
+                    sh """
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                          -Dsonar.projectKey=emran-jenkins \
+                          -Dsonar.sources=src \
+                          -Dsonar.java.binaries=target \
+                          -Dsonar.host.url=http://34.229.178.233:9001 \
+                          -Dsonar.login=sonarqube
+                    """
                 }
             }
         }
