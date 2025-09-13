@@ -14,7 +14,7 @@ pipeline {
         NEXUS_CREDENTIAL_ID = "nexus-credentials"
 
         // SonarQube scanner tool
-        SCANNER_HOME = tool 'sonar-scanner'
+        SCANNER_HOME = tool 'sonar_scanner'
 
         // Slack details
         SLACK_CHANNEL = "#jenkins-integration"
