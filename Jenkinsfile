@@ -9,9 +9,9 @@ pipeline {
         // Nexus details
         NEXUS_VERSION       = "nexus3"
         NEXUS_PROTOCOL      = "http"
-        NEXUS_URL           = "3.83.214.6:8081"
+        NEXUS_URL           = "18.206.235.190:8081"
         NEXUS_REPOSITORY    = "Emran-NX-repo"
-        NEXUS_CREDENTIAL_ID = "nexus-credentials"
+        NEXUS_CREDENTIAL_ID = "NX"
 
         // SonarQube scanner tool
         SCANNER_HOME = tool 'sonar_scanner'
@@ -49,7 +49,7 @@ pipeline {
 
         stage("SonarQube Analysis") {
             steps {
-        withSonarQubeEnv('sonarqube-server') {
+        withSonarQubeEnv('sonar_scanner') {
             sh """
                 export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto.x86_64
                 /opt/sonar-scanner/bin/sonar-scanner \
