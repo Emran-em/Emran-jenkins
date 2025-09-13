@@ -81,7 +81,7 @@ pipeline {
             nexusArtifactUploader(
                 nexusVersion: NEXUS_VERSION,
                 protocol: NEXUS_PROTOCOL,
-                nexusUrl: 18.206.235.190:8081,
+                nexusUrl: "18.206.235.190:8081",
                 groupId: groupId,
                 version: version,
                 repository: Emran-NX-repo,
