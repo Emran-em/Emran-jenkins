@@ -98,14 +98,14 @@ pipeline {
 
         stage("Deploy to Tomcat") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'deployer', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'Tomcat', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                     script {
                         def warFile = sh(script: "ls target/*.war | head -n 1", returnStdout: true).trim()
                         echo "Deploying ${warFile} to Tomcat at /emran-app ..."
                         sh """
                             curl -u $TOMCAT_USER:$TOMCAT_PASS \
                                  -T ${warFile} \
-                                 "http://54.221.151.214:8080/manager/text/deploy?path=/emran-app&update=true"
+                                 "http://34.228.196.169:8080/manager/text/deploy?path=/emran-app&update=true"
                         """
                     }
                 }
