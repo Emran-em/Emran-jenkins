@@ -63,49 +63,38 @@ pipeline {
         }
 
         stage("Publish to Nexus") {
-            steps {
-                script {
-                    // Read POM safely
-                    def pom = readMavenPom file: "pom.xml"
-                    def version = pom.getProperties()['project.version'] ?: '1.0-SNAPSHOT'
-                    def artifactId = pom.getArtifactId()
-                    def groupId = pom.getGroupId()
-                    def packaging = pom.getPackaging()
+    steps {
+        script {
+            def artifactId = sh(script: "mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout", returnStdout: true).trim()
+            def groupId    = sh(script: "mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout", returnStdout: true).trim()
+            def version    = sh(script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout", returnStdout: true).trim()
+            def packaging  = sh(script: "mvn help:evaluate -Dexpression=project.packaging -q -DforceStdout", returnStdout: true).trim()
 
-                    def filesByGlob = findFiles(glob: "target/*.${packaging}")
-                    if (filesByGlob.length == 0) {
-                        error "No ${packaging} file found in target directory!"
-                    }
-
-                    def artifactPath = filesByGlob[0].path
-                    echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version: ${version}"
-
-                    nexusArtifactUploader(
-                        nexusVersion: NEXUS_VERSION,
-                        protocol: NEXUS_PROTOCOL,
-                        nexusUrl: NEXUS_URL,
-                        groupId: groupId,
-                        version: version,
-                        repository: NEXUS_REPOSITORY,
-                        credentialsId: NEXUS_CREDENTIAL_ID,
-                        artifacts: [
-                            [
-                                artifactId: artifactId,
-                                classifier: '',
-                                file: artifactPath,
-                                type: packaging
-                            ],
-                            [
-                                artifactId: artifactId,
-                                classifier: '',
-                                file: "pom.xml",
-                                type: "pom"
-                            ]
-                        ]
-                    )
-                }
+            def filesByGlob = findFiles(glob: "target/*.${packaging}")
+            if (filesByGlob.length == 0) {
+                error "No ${packaging} file found in target directory!"
             }
+            def artifactPath = filesByGlob[0].path
+
+            echo "*** File: ${artifactPath}, group: ${groupId}, packaging: ${packaging}, version: ${version}"
+
+            nexusArtifactUploader(
+                nexusVersion: NEXUS_VERSION,
+                protocol: NEXUS_PROTOCOL,
+                nexusUrl: 18.206.235.190:8081/,
+                groupId: groupId,
+                version: version,
+                repository: Emran-NX-repo,
+                credentialsId: NX,
+                artifacts: [
+                    [artifactId: artifactId, classifier: '', file: artifactPath, type: packaging],
+                    [artifactId: artifactId, classifier: '', file: "pom.xml", type: "pom"]
+                ]
+            )
         }
+    }
+}
+
 
         stage("Deploy to Tomcat") {
             steps {
